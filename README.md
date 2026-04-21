@@ -1,110 +1,84 @@
 # llm-wiki
 
-A Claude Code skill for building and maintaining a personal LLM-powered wiki inside your Obsidian vault — persistent, compounding knowledge base.
+A Claude Code skill for building and maintaining an LLM-powered wiki inside your Obsidian vault.
 
-Based on the [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) pattern by Andrej Karpathy.
+It follows the LLM Wiki pattern: raw sources stay immutable, the LLM maintains structured wiki pages, and answers can be fed back into the vault so knowledge compounds over time.
 
-## What it does
+## What this repository contains
 
-Drop an article, paper, or note into your vault and the LLM:
+- `SKILL.md` — the publishable Claude Code skill
+- `docs/` — user-facing setup and usage documentation
+- `templates/` — files the skill can use when initializing a vault wiki
+- `examples/` — a starter vault example showing the intended output shape
 
-1. Reads and analyzes it
-2. Creates structured summary pages in `wiki/sources/`
-3. Updates or creates entity/concept pages in `wiki/entities/` and `wiki/concepts/`
-4. Maintains cross-references, flags contradictions, and keeps `index.md` current
-5. Logs every action to `log.md`
+## Install
 
-The wiki is a **persistent, compounding artifact** — cross-references are pre-built, synthesis accumulates over time. The LLM never re-derives knowledge from scratch.
-
-## Features
-
-- **Ingest** — Process URLs, files, or pasted text into the wiki
-- **Query** — Ask questions; LLM searches the wiki and synthesizes answers
-- **Lint** — Health-check for contradictions, stale pages, orphan pages
-- **Browse** — Open any wiki page in Obsidian GUI
-- **Clip** — Capture web articles to `raw/sources/`
-
-All file operations are annotated with vault-relative paths so you can locate any file instantly in Obsidian.
-
-## Requirements
-
-- [Claude Code](https://claude.ai/code) (latest)
-- [Obsidian](https://obsidian.md/) 1.12+ with CLI enabled (`Settings → General → Command line interface`)
-- An Obsidian vault (new or existing)
-
-## Quick Start
-
-### 1. Clone / copy this skill
-
-Copy the `SKILL.md` to your Claude Code skills directory:
+Copy the skill into your Claude Code skills directory:
 
 ```bash
-# Claude Code scans ~/.claude/skills/ for skills
 cp SKILL.md ~/.claude/skills/llm-wiki/SKILL.md
 ```
 
-Or clone this repo and symlink:
+Or clone this repository into your skills directory:
 
 ```bash
 git clone https://github.com/meng-jinglei/llm-wiki.git ~/.claude/skills/llm-wiki
 ```
 
-### 2. Initialize the wiki
+## What the skill does
 
-```bash
-/llm-wiki init
+The skill supports these workflows:
+
+- `init` — initialize wiki structure inside an Obsidian vault
+- `clip` — capture a web page into `raw/sources/`
+- `ingest` — turn a source into structured wiki pages
+- `query` — answer questions from the accumulated wiki
+- `lint` — review the wiki for contradictions and maintenance issues
+- `browse` — open a target page in Obsidian
+
+## Obsidian integration
+
+The skill is designed to work inside an Obsidian vault.
+
+- Prefer direct filesystem reads and writes for reliability
+- Use `obsidian search` when the Obsidian CLI is available
+- Fall back to file search when the CLI is unavailable
+- Only use GUI-opening actions when explicitly requested
+
+See setup details in [docs/obsidian-setup.md](docs/obsidian-setup.md).
+
+## Repository structure
+
+```text
+llm-wiki/
+├── SKILL.md
+├── README.md
+├── docs/
+│   └── obsidian-setup.md
+├── templates/
+│   ├── index.md
+│   ├── log.md
+│   ├── page-template.md
+│   └── vault-CLAUDE.md
+└── examples/
+    └── starter-vault/
+        ├── CLAUDE.md
+        ├── index.md
+        ├── log.md
+        └── wiki/
+            └── overview.md
 ```
 
-Enter your Obsidian vault path when prompted. The skill creates:
+## Templates vs examples
 
-```
-vault-root/
-├── CLAUDE.md              # Schema (tells LLM how the wiki works)
-├── index.md               # Catalog of all wiki pages
-├── log.md                 # Activity log
-├── raw/                   # Immutable sources
-│   ├── sources/           # Ingested articles, papers
-│   └── assets/            # Downloaded images
-└── wiki/                  # LLM-generated pages
-    ├── entities/
-    ├── concepts/
-    ├── sources/
-    ├── comparisons/
-    └── analyses/
-```
+- `templates/` contains reusable initialization inputs for the skill
+- `examples/` contains a human-readable sample result for reference
 
-### 3. Start building your wiki
+## Requirements
 
-```bash
-# Clip a web article
-/llm-wiki clip https://example.com/article
-
-# Ingest and process it
-/llm-wiki ingest
-
-# Ask questions
-/llm-wiki query What does the article say about X?
-
-# Health-check
-/llm-wiki lint
-```
-
-## Obsidian Setup
-
-See [obsidian-setup.md](obsidian-setup.md) for:
-- Enabling Obsidian CLI
-- Configuring attachment folders
-- Recommended plugins (Dataview, QuickAdd)
-
-## Architecture
-
-Three layers:
-
-| Layer | Description |
-|-------|-------------|
-| `raw/` | Immutable source documents — LLM reads, never modifies |
-| `wiki/` | LLM-generated pages — summaries, entities, concepts, analyses |
-| `CLAUDE.md` | Schema — defines conventions and workflows |
+- Claude Code
+- Obsidian
+- An Obsidian vault
 
 ## License
 
