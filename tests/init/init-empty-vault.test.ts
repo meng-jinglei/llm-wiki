@@ -25,59 +25,82 @@ describe('init empty vault', () => {
   });
 
   it('creates required structure', async () => {
-    // This test will be implemented in a future plan when the init command exists
-    // For now, this scaffold defines the expected behavior
+    // Import modules
+    const { planBootstrap } = await import('../../src/bootstrap/plan.js');
+    const { getRequiredDirs, getRequiredFiles } = await import('../../src/bootstrap/catalog.js');
+    const { validateVaultPath } = await import('../../src/validation/init-options.js');
 
-    // Expected required directories from D-05/D-06:
-    const requiredDirs = [
-      'raw/sources',
-      'raw/assets',
-      'wiki/entities',
-      'wiki/concepts',
-      'wiki/sources',
-      'wiki/comparisons',
-      'wiki/analyses',
-      '.llm-wiki/cache',
-      '.llm-wiki/manifests',
-    ];
+    // Validate vault path
+    const validatedPath = validateVaultPath(testVault);
+    expect(validatedPath).toBe(testVault);
 
-    // Expected required files from D-05/D-06:
-    const requiredFiles = [
-      'CLAUDE.md',
-      'index.md',
-      'log.md',
-      'wiki/overview.md',
-      '.llm-wiki/state.db',
-    ];
+    // Plan bootstrap for empty vault
+    const plan = await planBootstrap(testVault);
 
-    // Placeholder assertion - actual implementation will call init command
-    // and verify that all required directories and files exist
-    expect(testVault).toBeDefined();
+    // Verify plan produces all required actions
+    const requiredDirs = getRequiredDirs();
+    const requiredFiles = getRequiredFiles();
 
-    // When init is implemented, this test will:
-    // 1. Run init command on empty vault
-    // 2. Verify all requiredDirs exist
-    // 3. Verify all requiredFiles exist
-    // 4. Verify CLAUDE.md contains schema from templates/vault-CLAUDE.md
-    // 5. Verify index.md contains overview link from templates/index.md
-    // 6. Verify log.md exists
-    // 7. Verify wiki/overview.md contains content from templates/wiki-overview.md
-    // 8. Verify .llm-wiki/state.db is a valid SQLite database
+    // All required directories should be in create plan
+    expect(plan.create.filter(a => a.kind === 'mkdir').length).toBe(requiredDirs.length);
+
+    // All required files should be in create plan
+    expect(plan.create.filter(a => a.kind === 'copy-template').length).toBe(requiredFiles.length);
+
+    // state.db should be created
+    expect(plan.create.some(a => a.kind === 'create-db')).toBe(true);
+
+    // Skip should be empty for empty vault
+    expect(plan.skip.length).toBe(0);
   });
 
   it('creates required directories with correct structure', async () => {
-    // Scaffold for directory structure verification
-    // Will verify three-zone layout: wiki/, raw/, .llm-wiki/
-    expect(testVault).toBeDefined();
+    // Import modules
+    const { planBootstrap } = await import('../../src/bootstrap/plan.js');
+    const { getRequiredDirs } = await import('../../src/bootstrap/catalog.js');
+
+    // Plan bootstrap
+    const plan = await planBootstrap(testVault);
+    const requiredDirs = getRequiredDirs();
+
+    // Extract mkdir destinations
+    const mkdirActions = plan.create.filter(a => a.kind === 'mkdir');
+    const destinations = mkdirActions.map(a => (a as any).dest);
+
+    // Verify three-zone layout
+    const wikiDirs = destinations.filter(d => d.startsWith('wiki/'));
+    const rawDirs = destinations.filter(d => d.startsWith('raw/'));
+    const llmWikiDirs = destinations.filter(d => d.startsWith('.llm-wiki/'));
+
+    expect(wikiDirs.length).toBe(5); // entities, concepts, sources, comparisons, analyses
+    expect(rawDirs.length).toBe(2); // sources, assets
+    expect(llmWikiDirs.length).toBe(2); // cache, manifests
   });
 
   it('copies template content correctly', async () => {
-    // Scaffold for template content verification
-    // Will verify:
-    // - templates/vault-CLAUDE.md -> vault/CLAUDE.md
-    // - templates/index.md -> vault/index.md
-    // - templates/log.md -> vault/log.md
-    // - templates/wiki-overview.md -> vault/wiki/overview.md
-    expect(testVault).toBeDefined();
+    // Import modules
+    const { planBootstrap } = await import('../../src/bootstrap/plan.js');
+    const { getRequiredFiles } = await import('../../src/bootstrap/catalog.js');
+
+    // Plan bootstrap
+    const plan = await planBootstrap(testVault);
+    const requiredFiles = getRequiredFiles();
+
+    // Extract copy-template actions
+    const copyActions = plan.create.filter(a => a.kind === 'copy-template');
+
+    // Verify correct template sources
+    const sources = copyActions.map(a => (a as any).source);
+    expect(sources).toContain('templates/vault-CLAUDE.md');
+    expect(sources).toContain('templates/index.md');
+    expect(sources).toContain('templates/log.md');
+    expect(sources).toContain('templates/wiki-overview.md');
+
+    // Verify correct destinations
+    const destinations = copyActions.map(a => (a as any).dest);
+    expect(destinations).toContain('CLAUDE.md');
+    expect(destinations).toContain('index.md');
+    expect(destinations).toContain('log.md');
+    expect(destinations).toContain('wiki/overview.md');
   });
 });

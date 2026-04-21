@@ -26,43 +26,88 @@ describe('init partial vault', () => {
   });
 
   it('repairs missing assets', async () => {
-    // This test will be implemented when the init command exists
-    // For now, this scaffold defines the expected behavior
+    // Import modules
+    const { planBootstrap } = await import('../../src/bootstrap/plan.js');
+    const { getRequiredDirs, getRequiredFiles } = await import('../../src/bootstrap/catalog.js');
 
-    // Setup: Create a partial vault with some required assets missing
-    // For example, create CLAUDE.md and index.md but leave wiki/overview.md missing
-    // and wiki/entities/ directory missing
+    // Setup: Create partial vault with some required assets
+    await mkdir(join(testVault, 'wiki'), { recursive: true });
+    await writeFile(join(testVault, 'CLAUDE.md'), 'user content');
+    await writeFile(join(testVault, 'index.md'), 'user content');
+    // Missing: wiki/overview.md, log.md, wiki/entities/, .llm-wiki/
 
-    // Expected behavior when init runs:
-    // - Missing wiki/overview.md should be created
-    // - Missing wiki/entities/ directory should be created
-    // - Existing CLAUDE.md and index.md should NOT be overwritten
-    // - Result should report: created (missing assets), skipped (existing assets)
+    // Plan bootstrap
+    const plan = await planBootstrap(testVault);
 
-    expect(testVault).toBeDefined();
+    // Verify: missing assets are marked for creation
+    const createActions = plan.create;
+    expect(createActions.some(a => a.kind === 'copy-template' && (a as any).dest === 'log.md')).toBe(true);
+    expect(createActions.some(a => a.kind === 'copy-template' && (a as any).dest === 'wiki/overview.md')).toBe(true);
+    expect(createActions.some(a => a.kind === 'mkdir' && (a as any).dest === 'wiki/entities')).toBe(true);
+
+    // Verify: existing assets are marked as skipped
+    const skipActions = plan.skip;
+    expect(skipActions.some(a => a.kind === 'copy-template' && (a as any).dest === 'CLAUDE.md')).toBe(true);
+    expect(skipActions.some(a => a.kind === 'copy-template' && (a as any).dest === 'index.md')).toBe(true);
   });
 
   it('does not overwrite user-modified files', async () => {
-    // Scaffold for non-overwrite verification
-    // Setup: Create vault with existing CLAUDE.md that has user modifications
-    // Expected: init should preserve user modifications, only create missing files
+    // Import modules
+    const { planBootstrap } = await import('../../src/bootstrap/plan.js');
 
-    expect(testVault).toBeDefined();
+    // Setup: Create vault with existing CLAUDE.md that has user modifications
+    const userContent = '# Custom user schema\n\nThis is my custom content.';
+    await writeFile(join(testVault, 'CLAUDE.md'), userContent);
+
+    // Plan bootstrap
+    const plan = await planBootstrap(testVault);
+
+    // Verify: CLAUDE.md should be skipped, not created
+    const createClaude = plan.create.some(a => a.kind === 'copy-template' && (a as any).dest === 'CLAUDE.md');
+    const skipClaude = plan.skip.some(a => a.kind === 'copy-template' && (a as any).dest === 'CLAUDE.md');
+
+    expect(createClaude).toBe(false);
+    expect(skipClaude).toBe(true);
   });
 
   it('recreates missing directories without duplication', async () => {
-    // Scaffold for directory repair verification
-    // Setup: Create vault with some directories missing
-    // Expected: init should create missing directories, not duplicate existing ones
+    // Import modules
+    const { planBootstrap } = await import('../../src/bootstrap/plan.js');
 
-    expect(testVault).toBeDefined();
+    // Setup: Create vault with some directories existing
+    await mkdir(join(testVault, 'wiki', 'entities'), { recursive: true });
+    // Missing: wiki/concepts/, raw/sources/, .llm-wiki/cache/
+
+    // Plan bootstrap
+    const plan = await planBootstrap(testVault);
+
+    // Verify: missing directories are created, existing ones skipped
+    const createDirs = plan.create.filter(a => a.kind === 'mkdir').map(a => (a as any).dest);
+    const skipDirs = plan.skip.filter(a => a.kind === 'mkdir').map(a => (a as any).dest);
+
+    expect(createDirs).toContain('wiki/concepts');
+    expect(createDirs).toContain('raw/sources');
+    expect(skipDirs).toContain('wiki/entities');
   });
 
   it('creates missing .llm-wiki sidecar state', async () => {
-    // Scaffold for sidecar state repair
-    // Setup: Create vault with human-facing files but missing .llm-wiki/
-    // Expected: init should create .llm-wiki/state.db and subdirectories
+    // Import modules
+    const { planBootstrap } = await import('../../src/bootstrap/plan.js');
 
-    expect(testVault).toBeDefined();
+    // Setup: Create vault with human-facing files but missing .llm-wiki/
+    await mkdir(join(testVault, 'wiki'), { recursive: true });
+    await writeFile(join(testVault, 'CLAUDE.md'), 'content');
+    // Missing: .llm-wiki/state.db, .llm-wiki/cache/, .llm-wiki/manifests/
+
+    // Plan bootstrap
+    const plan = await planBootstrap(testVault);
+
+    // Verify: sidecar directories and DB are created
+    const createDirs = plan.create.filter(a => a.kind === 'mkdir').map(a => (a as any).dest);
+    const createDb = plan.create.some(a => a.kind === 'create-db');
+
+    expect(createDirs).toContain('.llm-wiki/cache');
+    expect(createDirs).toContain('.llm-wiki/manifests');
+    expect(createDb).toBe(true);
   });
 });

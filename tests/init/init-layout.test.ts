@@ -27,67 +27,159 @@ describe('init layout', () => {
     await rm(testVault, { recursive: true, force: true });
   });
 
+  describe('path validation', () => {
+    it('rejects path escapes in vault target', async () => {
+      // Import modules
+      const { validateVaultPath } = await import('../../src/validation/init-options.js');
+
+      // Test path traversal attempts
+      const maliciousPaths = [
+        '../../../etc/passwd',
+        '..\\..\\..\\windows\\system32',
+        '/etc/passwd',
+        'C:\\Windows\\System32',
+      ];
+
+      for (const malicious of maliciousPaths) {
+        expect(() => validateVaultPath(malicious)).toThrow();
+      }
+    });
+
+    it('rejects invalid vault targets', async () => {
+      // Import modules
+      const { validateVaultPath } = await import('../../src/validation/init-options.js');
+
+      // Test invalid targets
+      expect(() => validateVaultPath('')).toThrow();
+      expect(() => validateVaultPath(null as any)).toThrow();
+      expect(() => validateVaultPath(undefined as any)).toThrow();
+    });
+
+    it('accepts valid vault paths', async () => {
+      // Import modules
+      const { validateVaultPath } = await import('../../src/validation/init-options.js');
+
+      // Test valid paths
+      const validPaths = [
+        testVault,
+        '/home/user/wiki',
+        'C:\\Users\\wiki',
+        './my-wiki',
+      ];
+
+      for (const valid of validPaths) {
+        const result = validateVaultPath(valid);
+        expect(result).toBeDefined();
+      }
+    });
+  });
+
   it('separates markdown and sidecar state', async () => {
-    // This test will be implemented when the init command exists
-    // For now, this scaffold defines the expected behavior
+    // Import modules
+    const { planBootstrap } = await import('../../src/bootstrap/plan.js');
+    const { getRequiredDirs, getRequiredFiles } = await import('../../src/bootstrap/catalog.js');
 
-    // Expected three-zone separation:
-    // 1. Human-facing markdown: CLAUDE.md, index.md, log.md, wiki/**, raw/**
-    // 2. Machine state: .llm-wiki/** (state.db, cache/, manifests/)
-    // 3. No mixing: markdown files should not exist under .llm-wiki/
-    //    state.db should not exist outside .llm-wiki/
+    // Plan bootstrap
+    const plan = await planBootstrap(testVault);
 
-    expect(testVault).toBeDefined();
+    // Verify three-zone separation
+    const mkdirActions = plan.create.filter(a => a.kind === 'mkdir');
+    const copyActions = plan.create.filter(a => a.kind === 'copy-template');
+
+    // Human-facing destinations: wiki/, raw/, root files
+    const humanMkdirs = mkdirActions.filter(a => !(a as any).dest.startsWith('.llm-wiki/'));
+    const humanCopies = copyActions.filter(a => !(a as any).dest.startsWith('.llm-wiki/'));
+
+    // Machine state: .llm-wiki/ only
+    const machineMkdirs = mkdirActions.filter(a => (a as any).dest.startsWith('.llm-wiki/'));
+    const machineDb = plan.create.filter(a => a.kind === 'create-db');
+
+    // Verify: human zones have wiki/ and raw/ dirs
+    expect(humanMkdirs.some(a => (a as any).dest.startsWith('wiki/'))).toBe(true);
+    expect(humanMkdirs.some(a => (a as any).dest.startsWith('raw/'))).toBe(true);
+
+    // Verify: machine zone has .llm-wiki/ dirs and state.db
+    expect(machineMkdirs.some(a => (a as any).dest.startsWith('.llm-wiki/'))).toBe(true);
+    expect(machineDb.length).toBe(1);
+
+    // Verify: no markdown files in .llm-wiki/
+    const llmWikiCopies = copyActions.filter(a => (a as any).dest.startsWith('.llm-wiki/'));
+    expect(llmWikiCopies.length).toBe(0);
   });
 
   it('human-facing markdown in vault root and wiki/', async () => {
-    // Scaffold for human zone verification
-    // Expected files in human zone:
-    // - vault/CLAUDE.md
-    // - vault/index.md
-    // - vault/log.md
-    // - vault/wiki/overview.md
-    // - vault/wiki/entities/ (directory)
-    // - vault/wiki/concepts/ (directory)
-    // - vault/wiki/sources/ (directory)
-    // - vault/wiki/comparisons/ (directory)
-    // - vault/wiki/analyses/ (directory)
+    // Import modules
+    const { planBootstrap } = await import('../../src/bootstrap/plan.js');
 
-    expect(testVault).toBeDefined();
+    // Plan bootstrap
+    const plan = await planBootstrap(testVault);
+    const copyActions = plan.create.filter(a => a.kind === 'copy-template');
+
+    // Verify human-facing files are in root or wiki/
+    const humanFiles = copyActions.map(a => (a as any).dest);
+    expect(humanFiles).toContain('CLAUDE.md'); // root
+    expect(humanFiles).toContain('index.md'); // root
+    expect(humanFiles).toContain('log.md'); // root
+    expect(humanFiles).toContain('wiki/overview.md'); // wiki/
   });
 
   it('raw sources in raw/', async () => {
-    // Scaffold for raw zone verification
-    // Expected directories in raw zone:
-    // - vault/raw/sources/
-    // - vault/raw/assets/
+    // Import modules
+    const { planBootstrap } = await import('../../src/bootstrap/plan.js');
 
-    expect(testVault).toBeDefined();
+    // Plan bootstrap
+    const plan = await planBootstrap(testVault);
+    const mkdirActions = plan.create.filter(a => a.kind === 'mkdir');
+
+    // Verify raw/ directories exist
+    const rawDirs = mkdirActions.filter(a => (a as any).dest.startsWith('raw/'));
+    expect(rawDirs.some(a => (a as any).dest === 'raw/sources')).toBe(true);
+    expect(rawDirs.some(a => (a as any).dest === 'raw/assets')).toBe(true);
   });
 
   it('machine state in .llm-wiki/', async () => {
-    // Scaffold for machine zone verification
-    // Expected in machine zone:
-    // - vault/.llm-wiki/state.db
-    // - vault/.llm-wiki/cache/
-    // - vault/.llm-wiki/manifests/
+    // Import modules
+    const { planBootstrap } = await import('../../src/bootstrap/plan.js');
 
-    expect(testVault).toBeDefined();
+    // Plan bootstrap
+    const plan = await planBootstrap(testVault);
+    const mkdirActions = plan.create.filter(a => a.kind === 'mkdir');
+    const dbActions = plan.create.filter(a => a.kind === 'create-db');
+
+    // Verify .llm-wiki/ directories
+    const llmWikiDirs = mkdirActions.filter(a => (a as any).dest.startsWith('.llm-wiki/'));
+    expect(llmWikiDirs.some(a => (a as any).dest === '.llm-wiki/cache')).toBe(true);
+    expect(llmWikiDirs.some(a => (a as any).dest === '.llm-wiki/manifests')).toBe(true);
+
+    // Verify state.db is created
+    expect(dbActions.length).toBe(1);
   });
 
   it('no markdown files under .llm-wiki/', async () => {
-    // Scaffold for separation verification
-    // Expected: .llm-wiki/ contains only state.db and directories
-    // Not: .md files, wiki content, or human-facing artifacts
+    // Import modules
+    const { planBootstrap } = await import('../../src/bootstrap/plan.js');
 
-    expect(testVault).toBeDefined();
+    // Plan bootstrap
+    const plan = await planBootstrap(testVault);
+    const copyActions = plan.create.filter(a => a.kind === 'copy-template');
+
+    // Verify no markdown files planned for .llm-wiki/
+    const llmWikiMarkdown = copyActions.filter(a => (a as any).dest.startsWith('.llm-wiki/') && (a as any).dest.endsWith('.md'));
+    expect(llmWikiMarkdown.length).toBe(0);
   });
 
   it('no state.db outside .llm-wiki/', async () => {
-    // Scaffold for state confinement verification
-    // Expected: state.db exists only in .llm-wiki/
-    // Not: in vault root, wiki/, or raw/
+    // Import modules
+    const { planBootstrap } = await import('../../src/bootstrap/plan.js');
 
-    expect(testVault).toBeDefined();
+    // Plan bootstrap
+    const plan = await planBootstrap(testVault);
+    const dbActions = plan.create.filter(a => a.kind === 'create-db');
+
+    // Verify state.db destination is always under .llm-wiki/
+    expect(dbActions.length).toBe(1);
+    const dbDest = (dbActions[0] as any).dest;
+    expect(dbDest).toContain('.llm-wiki/');
+    expect(dbDest).not.toMatch(/^(wiki|raw)/);
   });
 });
