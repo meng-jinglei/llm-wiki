@@ -25,37 +25,79 @@ describe('init idempotent', () => {
   });
 
   it('is idempotent', async () => {
-    // This test will be implemented when the init command exists
-    // For now, this scaffold defines the expected behavior
+    // Import modules
+    const { initCommand } = await import('../../src/cli/commands/init.js');
 
-    // Setup: Run init twice on the same vault
-    // Expected behavior:
-    // First run: All assets created, result shows created paths
-    // Second run: All assets skipped, result shows skipped paths, no file changes
+    // First run: init empty vault
+    const result1 = await initCommand(testVault);
+    expect(result1.created.length).toBeGreaterThan(0);
+    expect(result1.skipped.length).toBe(0);
+    expect(result1.nextStep).toBe('llm-wiki ingest <url>');
 
-    expect(testVault).toBeDefined();
+    // Second run: init same vault
+    const result2 = await initCommand(testVault);
+    expect(result2.created.length).toBe(0);
+    expect(result2.skipped.length).toBeGreaterThan(0);
+    expect(result2.nextStep).toBe('llm-wiki ingest <url>');
   });
 
   it('second run produces skipped output', async () => {
-    // Scaffold for skipped-path verification
-    // Expected: Second init run should report all paths as skipped
+    // Import modules
+    const { initCommand } = await import('../../src/cli/commands/init.js');
 
-    expect(testVault).toBeDefined();
+    // Run init twice
+    await initCommand(testVault);
+    const result = await initCommand(testVault);
+
+    // Verify all paths are skipped, not created
+    expect(result.created.length).toBe(0);
+    expect(result.repaired.length).toBe(0);
+    expect(result.skipped.length).toBeGreaterThan(0);
   });
 
   it('second run does not modify existing content', async () => {
-    // Scaffold for content preservation verification
-    // Setup: After first init, possibly modify some files
-    // Expected: Second init should not change file content
+    // Import modules
+    const { initCommand } = await import('../../src/cli/commands/init.js');
+    const { readFile } = await import('fs/promises');
 
-    expect(testVault).toBeDefined();
+    // First run
+    await initCommand(testVault);
+
+    // Read content after first run
+    const claude1 = await readFile(join(testVault, 'CLAUDE.md'), 'utf-8');
+
+    // Modify content manually
+    await writeFile(join(testVault, 'CLAUDE.md'), 'MODIFIED CONTENT');
+
+    // Second run
+    await initCommand(testVault);
+
+    // Read content after second run
+    const claude2 = await readFile(join(testVault, 'CLAUDE.md'), 'utf-8');
+
+    // Verify content was not overwritten
+    expect(claude2).toBe('MODIFIED CONTENT');
   });
 
   it('handles partial deletion between runs', async () => {
-    // Scaffold for repair after partial deletion
-    // Setup: After first init, delete some files/directories
-    // Expected: Second init should repair missing assets, preserve existing ones
+    // Import modules
+    const { initCommand } = await import('../../src/cli/commands/init.js');
+    const { rm } = await import('fs/promises');
 
-    expect(testVault).toBeDefined();
+    // First run: create complete vault
+    await initCommand(testVault);
+
+    // Delete some files/directories
+    await rm(join(testVault, 'wiki', 'overview.md'));
+    await rm(join(testVault, 'wiki', 'entities'), { recursive: true, force: true });
+
+    // Second run: repair missing assets
+    const result = await initCommand(testVault);
+
+    // Verify missing assets are repaired, existing ones skipped
+    expect(result.repaired.length).toBeGreaterThan(0);
+    expect(result.repaired).toContain('wiki/overview.md');
+    expect(result.repaired).toContain('wiki/entities');
+    expect(result.skipped.length).toBeGreaterThan(0);
   });
 });

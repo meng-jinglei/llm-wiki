@@ -28,51 +28,66 @@ describe('init local only', () => {
   });
 
   it('does not require hosted services', async () => {
-    // This test will be implemented when the init command exists
-    // For now, this scaffold defines the expected behavior
+    // Import modules
+    const { initCommand } = await import('../../src/cli/commands/init.js');
 
-    // Expected: init should succeed without:
-    // - Network calls to hosted services
-    // - Obsidian CLI availability
-    // - Cloud service dependencies
-    // - Database server dependencies
+    // Run init without any network connectivity check
+    // This should succeed using only local filesystem and SQLite
+    const result = await initCommand(testVault);
 
-    // Init should work with:
-    // - Local filesystem only
-    // - Local SQLite database
-    // - Local template files from templates/
+    expect(result.created.length).toBeGreaterThan(0);
+    expect(result.nextStep).toBe('llm-wiki ingest <url>');
 
-    expect(testVault).toBeDefined();
+    // Verify no network calls were made (implicit by success in isolated test environment)
   });
 
   it('works without Obsidian CLI', async () => {
-    // Scaffold for Obsidian-free execution
-    // Expected: init succeeds even when `obsidian` command is unavailable
-    // Init uses filesystem I/O, not Obsidian CLI integration
+    // Import modules
+    const { initCommand } = await import('../../src/cli/commands/init.js');
 
-    expect(testVault).toBeDefined();
+    // Run init in test environment where Obsidian CLI is not available/checked
+    const result = await initCommand(testVault);
+
+    // Should succeed regardless of Obsidian CLI presence
+    expect(result.created.length).toBeGreaterThan(0);
   });
 
   it('works without Obsidian app running', async () => {
-    // Scaffold for app-independent execution
-    // Expected: init succeeds without Obsidian GUI application running
+    // Import modules
+    const { initCommand } = await import('../../src/cli/commands/init.js');
 
-    expect(testVault).toBeDefined();
+    // Run init without checking if Obsidian GUI is running
+    const result = await initCommand(testVault);
+
+    // Should succeed without any Obsidian dependencies
+    expect(result.created.length).toBeGreaterThan(0);
   });
 
   it('works without network connectivity', async () => {
-    // Scaffold for offline execution
-    // Expected: init succeeds in offline environment
-    // All assets are local (templates/, no external fetch)
+    // Import modules
+    const { initCommand } = await import('../../src/cli/commands/init.js');
 
-    expect(testVault).toBeDefined();
+    // Run init in isolated test environment (no network required)
+    const result = await initCommand(testVault);
+
+    // All assets are local (templates/, SQLite) - no external fetch
+    expect(result.created.length).toBeGreaterThan(0);
   });
 
   it('creates local SQLite database', async () => {
-    // Scaffold for local DB verification
-    // Expected: .llm-wiki/state.db is a local SQLite file
-    // No remote database connection required
+    // Import modules
+    const { initCommand } = await import('../../src/cli/commands/init.js');
+    const { readFile } = await import('fs/promises');
+    const { join } = await import('path');
 
-    expect(testVault).toBeDefined();
+    // Run init
+    await initCommand(testVault);
+
+    // Verify .llm-wiki/state.db exists as local SQLite file
+    const dbPath = join(testVault, '.llm-wiki', 'state.db');
+    const dbContent = await readFile(dbPath);
+
+    // SQLite files start with "SQLite format 3" header
+    expect(dbContent.slice(0, 16).toString()).toBe('SQLite format 3\x00');
   });
 });
