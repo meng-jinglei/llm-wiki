@@ -1,5 +1,7 @@
 # llm-wiki
 
+[English](README.md) · [简体中文](README.zh-CN.md)
+
 一个 Claude Code skill，用于在你的 Obsidian vault 中构建和维护 LLM 驱动的 wiki。
 
 它遵循 LLM Wiki 模式：原始资料保持不可变，LLM 负责维护结构化 wiki 页面，并且回答结果也可以回写到 vault 中，让知识随着使用不断积累。

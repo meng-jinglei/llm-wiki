@@ -1,5 +1,7 @@
 # llm-wiki
 
+[English](README.md) · [简体中文](README.zh-CN.md)
+
 A Claude Code skill for building and maintaining an LLM-powered wiki inside your Obsidian vault.
 
 It follows the LLM Wiki pattern: raw sources stay immutable, the LLM maintains structured wiki pages, and answers can be fed back into the vault so knowledge compounds over time.
