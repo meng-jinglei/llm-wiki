@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 Plans:
 - [x] 01-01-PLAN.md — Canonicalize bootstrap templates and create the Node/TypeScript/Vitest init test baseline.
-- [ ] 01-02-PLAN.md — Implement the deterministic local init pipeline, sidecar bootstrap, and Commander CLI wiring.
+- [x] 01-02-PLAN.md — Implement the deterministic local init pipeline, sidecar bootstrap, and Commander CLI wiring.
 
 ### Phase 2: Source Capture & Transactional Ingest
 **Goal**: Users can ingest one source and see a trustworthy first round of multi-page wiki updates.
