@@ -29,7 +29,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. User can run llm-wiki locally without any hosted backend or cloud service.
   3. User can inspect generated wiki artifacts as normal markdown files in the vault and understand which files are human-facing versus sidecar runtime state.
   4. Re-running initialization repairs missing required files instead of creating duplicate scaffolding.
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [x] 01-01-PLAN.md — Canonicalize bootstrap templates and create the Node/TypeScript/Vitest init test baseline.
+- [ ] 01-02-PLAN.md — Implement the deterministic local init pipeline, sidecar bootstrap, and Commander CLI wiring.
 
 ### Phase 2: Source Capture & Transactional Ingest
 **Goal**: Users can ingest one source and see a trustworthy first round of multi-page wiki updates.
@@ -83,7 +86,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Local Runtime & Vault Bootstrap | 0/TBD | Not started | - |
+| 1. Local Runtime & Vault Bootstrap | 0/2 | Planned | - |
 | 2. Source Capture & Transactional Ingest | 0/TBD | Not started | - |
 | 3. Canonical Incremental Maintenance | 0/TBD | Not started | - |
 | 4. Wiki-First Query & Durable Analysis | 0/TBD | Not started | - |
