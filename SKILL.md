@@ -67,6 +67,82 @@ Examples:
 - If a query result is worth keeping, ask before saving it back into the vault.
 </global_rules>
 
+<large_file_protocol>
+Treat a source as large when it is impractical or wasteful to read end-to-end in one pass.
+
+Common cases:
+- long manuals and reference PDFs
+- scanned PDFs that may need OCR
+- large tables, spreadsheets, or register maps
+- logs, traces, or long generated reports
+- archives or multi-attachment source packs
+
+Rules:
+- capture the original file first and keep it immutable under `raw/`
+- when the source is a file attachment, prefer storing the original artifact in `raw/assets/`
+- create or update a source record in `raw/sources/` before broad ingest
+- create or update a source map when broad ingest would otherwise be wasteful or hard to verify
+- for manuals and similar references, record the file path, source type, version if known, page count if known, and the most important sections or page ranges
+- read the structure first: table of contents, headings, page ranges, filenames, or nearby index notes
+- ingest by relevant section or topic, not by blind full-document passes
+- preserve page ranges, section names, or other source anchors when writing summaries and claims
+- keep dense tables and volatile implementation detail in source-facing pages when possible, and only promote stable conclusions into maintained wiki pages
+- if the wiki is still missing evidence, say which page range, section, or attachment should be checked next instead of pretending the whole source has been reviewed
+
+<source_map_protocol>
+A source map is a lightweight working map for a large or awkward source. It helps later ingest and query work find the right section without repeatedly re-reading the whole source.
+
+Required fields:
+- file path
+- source type
+- structure mode
+- structure basis
+- confidence
+- major sections or working sections
+- useful page ranges or other source anchors when known
+- coverage status
+
+Structure modes:
+1. `explicit_toc`
+   - Use when the source already exposes reliable structure.
+   - Examples: manuals with a table of contents, standards, and long reports with stable headings.
+2. `inferred_structure`
+   - Use when the source has no reliable table of contents, but meaningful structure can still be inferred.
+   - Examples: long slide decks, chapterless lecture notes, and exported web documents.
+3. `coarse_map`
+   - Use when reliable structure cannot be extracted.
+   - Examples: OCR-poor scans, image-heavy PDFs, logs, traces, and mixed attachment packs.
+
+Required markings:
+- whether the structure is document-derived or inferred
+- how confident the structure is
+- whether coverage is partial, mapped, or broad enough for the current task
+- what still needs review next
+
+Minimum source map shape:
+```yaml
+title:
+type: source_map
+source_type:
+file_path:
+structure_mode: explicit_toc | inferred_structure | coarse_map
+structure_basis:
+confidence: high | medium | low
+coverage_status: partial | mapped | focused_ingest_complete
+```
+
+Suggested sections:
+- Overview
+- Structure notes
+- Section map
+- High-value ranges
+- Extraction caveats
+- Remaining coverage
+
+Do not present inferred structure as if it were an official table of contents.
+</source_map_protocol>
+</large_file_protocol>
+
 <workflows>
 
 ## init
@@ -98,8 +174,9 @@ Steps:
 2. Extract title and useful metadata when available.
 3. Save the source to `raw/sources/<slug>.md`.
 4. Save referenced attachments to `raw/assets/` when appropriate.
-5. Append a capture entry to `log.md`.
-6. Report the saved path and suggest ingest when appropriate.
+5. If the source is large or hard to read end-to-end, record a lightweight source map in `raw/sources/<slug>.md` with the file path, source type, major sections, and useful page ranges when known.
+6. Append a capture entry to `log.md`.
+7. Report the saved path and suggest ingest when appropriate.
 
 ## ingest
 Use when the user wants a source turned into wiki updates.
@@ -107,14 +184,16 @@ Use when the user wants a source turned into wiki updates.
 Steps:
 1. Read `index.md` and any obviously relevant wiki pages.
 2. Load the source from `raw/sources/`, URL, file path, or pasted text.
-3. Create or update `wiki/sources/<slug>.md`.
-4. Identify related concept and entity pages.
-5. Prefer updating existing pages before creating new ones.
-6. Create new pages only when the concept or entity is meaningfully distinct.
-7. Update links between touched pages.
-8. Update `index.md` if a new entry point or important page was added.
-9. Append an ingest entry to `log.md`.
-10. Report all touched paths.
+3. If the source is large, read or create a source map first and identify the sections or page ranges most relevant to the user's goal.
+4. Create or update `wiki/sources/<slug>.md`.
+5. Identify related concept and entity pages.
+6. Prefer updating existing pages before creating new ones.
+7. Create new pages only when the concept or entity is meaningfully distinct.
+8. Update links between touched pages.
+9. Update `index.md` if a new entry point or important page was added.
+10. Append an ingest entry to `log.md`.
+11. Report all touched paths.
+12. If the source still needs more coverage, state which sections or page ranges remain instead of implying the whole source has been fully processed.
 
 ## query
 Use when the user asks a question about the wiki.

@@ -29,7 +29,7 @@ If the request is ambiguous, the skill should choose the narrowest workflow that
 
 ### Example prompts
 - `Capture this article into the raw layer: <url>`
-- `Capture this PDF into raw/sources and keep the original file traceable.`
+- `Capture this PDF, keep the original file in raw/assets, and record it in raw/sources.`
 - `Capture the following pasted notes before we decide how to ingest them.`
 
 ### Expected behavior
@@ -53,6 +53,78 @@ If the request is ambiguous, the skill should choose the narrowest workflow that
 - append an ingest entry to `log.md`
 - report touched paths
 
+## 3A. Large-file capture
+
+### Example prompts
+- `Capture this Renesas hardware manual PDF and create a source map before any broad ingest.`
+- `Save this large PDF into the raw layer, keep the original file in raw/assets, and record the key sections we should use later.`
+- `Capture this scanned manual and note any OCR or extraction limitations in the source record.`
+
+### Expected behavior
+- save the original file into `raw/assets/` when appropriate
+- create or update a source record in `raw/sources/`
+- record the file path, source type, and major sections or page ranges when known
+- avoid pretending the whole document has already been reviewed
+- append a capture entry to `log.md`
+
+## 3A-1. Source map with explicit structure
+
+### Example prompts
+- `Create a source map for this manual using its table of contents.`
+- `Map this standard document by its official sections and page ranges before we ingest it.`
+
+### Expected behavior
+- use `explicit_toc` mode
+- derive the section map from the document's own structure
+- preserve official section names and page anchors
+
+## 3A-2. Source map with inferred structure
+
+### Example prompts
+- `This 240-page slide deck has no table of contents. Create an inferred source map first.`
+- `Group this lecture PDF into working sections and mark the result as inferred structure.`
+
+### Expected behavior
+- use `inferred_structure` mode
+- infer sections from titles, repeated labels, divider pages, or topic continuity
+- mark the structure basis and confidence explicitly
+
+## 3A-3. Coarse source map
+
+### Example prompts
+- `This scan is noisy. Make a coarse source map and tell me what page ranges are worth checking next.`
+- `Create only a rough map for this large log bundle; do not pretend the structure is reliable.`
+
+### Expected behavior
+- use `coarse_map` mode
+- record only rough clusters, high-value regions, or likely next inspection targets
+- make low confidence and partial coverage explicit
+
+## 3B. Large-file ingest
+
+### Example prompts
+- `Ingest only the UART section from this hardware manual and update the relevant wiki pages.`
+- `Use the source map for this manual, then ingest the clock tree and low-power sections into the wiki.`
+- `Review this large source by section and tell me which page ranges still need coverage.`
+
+### Expected behavior
+- read the source map or create one first
+- ingest by relevant section, page range, or topic rather than by full-document pass
+- preserve page anchors when writing claims
+- keep dense detail in source-facing pages unless it needs to become durable knowledge
+- report remaining uncovered sections when the source is only partially processed
+
+## 3B-1. Large-file ingest from an inferred map
+
+### Example prompts
+- `Use the inferred source map for this deck, then ingest only the pages about interrupt handling.`
+- `From this inferred map, update the concept pages for the clock system and leave the rest unprocessed.`
+
+### Expected behavior
+- respect the inferred structure instead of presenting it as official structure
+- preserve page anchors and uncertainty markers when writing claims
+- state what still needs review next
+
 ## 4. Query
 
 ### Example prompts
@@ -65,6 +137,17 @@ If the request is ambiguous, the skill should choose the narrowest workflow that
 - cite wiki page paths in the answer
 - consult raw sources only when necessary
 - offer to save the result if it seems durable
+
+## 4A. Query with source map fallback
+
+### Example prompts
+- `Answer from the wiki first. If the wiki is missing evidence, use the source map to tell me which section of the manual to inspect next.`
+- `What does the wiki currently say about DMA on this MCU? If coverage is partial, tell me which page range the source map points to next.`
+
+### Expected behavior
+- use the wiki first
+- use the source map before re-reading a large source broadly
+- name the next section or page range when evidence is still missing
 
 ## 5. Save after query
 
@@ -90,6 +173,16 @@ If the request is ambiguous, the skill should choose the narrowest workflow that
 - inspect the requested scope
 - return findings with file paths
 - only apply fixes if asked
+
+## 6A. Review a source map
+
+### Example prompts
+- `Review this source map and tell me whether the inferred sections are still coherent.`
+- `Check whether this coarse map is too weak for further ingest and tell me what should be remapped.`
+
+### Expected behavior
+- evaluate whether the map mode still matches the source quality
+- return gaps, weak sections, and the next remapping target without pretending full certainty
 
 ## 7. Curate
 
@@ -142,3 +235,30 @@ More reliable:
 - `Capture this URL into raw/sources/ and stop there.`
 - `Ingest this source and update the relevant concept pages.`
 - `Review this vault for outdated claims, but do not modify files yet.`
+
+## 11. Source map prompt patterns
+
+Use prompts that specify:
+- the desired map mode when you know it
+- whether the source has a real table of contents
+- whether structure should be inferred or kept coarse
+- whether the source map should highlight remaining coverage
+
+Examples:
+- `Create an explicit_toc source map for this manual and preserve official section names.`
+- `Make an inferred_structure source map for this slide deck and mark confidence levels.`
+- `Create only a coarse_map for this noisy scan and tell me what page range to inspect next.`
+
+Do not ask for a full-document summary when the real goal is to navigate a large source reliably.
+
+## 12. Avoid vague source-map prompts
+
+Less reliable:
+- `Read this whole manual and summarize it.`
+- `Map this file somehow.`
+- `Figure out this deck.`
+
+More reliable:
+- `Create a source map for this manual from its table of contents before any ingest.`
+- `Build an inferred source map for this directory-less deck and stop after the map.`
+- `Create a coarse source map for this OCR-poor scan and list the most promising page ranges.`

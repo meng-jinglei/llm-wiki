@@ -67,6 +67,16 @@ vault-root/
 
 No project-local skills are currently defined.
 
+## Git Version Management
+
+Treat this repository as a real project under git version control, not as a disposable skill folder.
+
+- Keep changes coherent, reviewable, and suitable for normal git history.
+- Prefer clean, intentional commits over ad-hoc local-only edits when the user wants changes to persist.
+- When reporting completed work, be ready to summarize the git-visible change set.
+- Preserve repository hygiene so the skill, templates, examples, and protocol docs can evolve as a maintained project.
+- When `SKILL.md` changes, do not immediately update the installed Claude Code skill or push the change. Show the change first, confirm with the user, and only then apply or publish it.
+
 ## GSD Workflow Enforcement
 
 Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
