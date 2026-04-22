@@ -1,7 +1,7 @@
 # llm-wiki — Index
 
 ## Start Here
-- [[wiki/overview]] — What this vault is about and how to use it
+- [[wiki/overview]] — What this workspace is about and how to use it
 
 ## Core Topics
 - [[wiki/concepts/example-concept]] — Replace with your most important concept pages

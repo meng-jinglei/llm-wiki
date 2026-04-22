@@ -1,11 +1,11 @@
 # llm-wiki — Index
 
-This is the lightweight entry point for the vault.
+This is the lightweight entry point for the workspace.
 
 Use it to point toward the main overview, major topics, important source pages, and durable analyses. Do not try to list everything.
 
 ## Start Here
-- [[wiki/overview]] — High-level orientation for this vault
+- [[wiki/overview]] — High-level orientation for this workspace
 
 ## Core Topics
 - Add the most important concept and entity pages here

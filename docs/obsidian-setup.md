@@ -1,15 +1,17 @@
-# Obsidian Setup Guide for llm-wiki
+# Optional Obsidian Integration for llm-wiki
 
-This guide explains how to make `llm-wiki` work smoothly inside an Obsidian vault.
+This guide explains how to use `llm-wiki` with Obsidian when you want a richer interface for the same local Markdown workspace.
 
-## 1. Prepare your vault
+`llm-wiki` does not require Obsidian. The core workflow works through direct filesystem reads and writes in a normal workspace directory.
 
-Make sure you already have an Obsidian vault that Claude can read and update.
+## 1. Prepare your workspace
+
+Make sure you already have a local Markdown workspace that Claude can read and update.
 
 The expected workflow structure is:
 
 ```text
-vault-root/
+workspace-root/
 ├── CLAUDE.md
 ├── index.md
 ├── log.md
@@ -27,7 +29,13 @@ vault-root/
 
 You can let `llm-wiki` initialize or repair this structure with the `init` workflow.
 
-## 2. Optional: enable the Obsidian CLI
+## 2. Open the workspace in Obsidian
+
+If you want to use Obsidian as a viewer and navigation layer, open the same workspace directory as an Obsidian vault.
+
+This does not change the core protocol. It only gives you a GUI for browsing, backlinks, search, and graph navigation.
+
+## 3. Optional: enable the Obsidian CLI
 
 The Obsidian CLI is an optional enhancement. It is useful for search and navigation, but `llm-wiki` should still work through direct filesystem reads and writes when the CLI is unavailable.
 
@@ -45,15 +53,15 @@ obsidian search query="example"
 
 If it returns matching file paths, CLI search is available.
 
-## 3. Optional: configure the attachment folder
+## 4. Optional: configure the attachment folder
 
-If you plan to capture web pages with attachments, set Obsidian's attachment folder path to `raw/assets`.
+If you plan to capture web pages with attachments, set Obsidian's attachment folder path to `raw/assets` so the GUI stays aligned with the llm-wiki workspace layout.
 
 In Obsidian:
 1. Open `Settings → Files & Links`
 2. Set **Attachment folder path** to `raw/assets`
 
-## 4. Recommended workflow habits
+## 5. Recommended workflow habits
 
 ### Capture
 Use capture when you want to preserve a URL, file, or pasted text in the raw layer first.
@@ -86,7 +94,7 @@ Examples:
 - "Merge these two pages."
 - "Split this page into two topics."
 
-## 5. Recommended plugins
+## 6. Recommended plugins
 
 These are optional enhancements, not core requirements.
 
@@ -96,11 +104,11 @@ Useful for dynamic lists and views derived from page frontmatter.
 ### Templater
 Useful if you want additional note templates beyond the default `llm-wiki` templates.
 
-## 6. Graph view
+## 7. Graph view
 
 Once the wiki grows, Obsidian Graph View can help you inspect how concepts, entities, and analyses connect over time.
 
-## 7. Important operational note
+## 8. Important operational note
 
 The most reliable default is:
 - direct filesystem reads and writes for content changes

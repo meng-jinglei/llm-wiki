@@ -2,19 +2,20 @@
 
 **llm-wiki**
 
-`llm-wiki` is a skill-first knowledge workflow for Claude Code + Obsidian.
+`llm-wiki` is a skill-first knowledge workflow for Claude Code and a local Markdown workspace, with Obsidian as an optional interface.
 
-The repository is not a standalone runtime application. Its primary purpose is to define and distribute the workflow protocol, vault schema, and starter templates for maintaining a persistent Markdown wiki inside an Obsidian vault.
+The repository is not a standalone runtime application. Its primary purpose is to define and distribute the workflow protocol, workspace schema, and starter templates for maintaining a persistent Markdown wiki on the local filesystem.
 
 **Core value:** New sources should update and improve an existing knowledge layer instead of becoming one-off summaries.
 
 ### Constraints
 
-- **Operating model:** Work inside Claude Code and a normal Obsidian vault.
+- **Operating model:** Work inside Claude Code and a normal local Markdown workspace.
 - **Primary artifact:** The maintained Markdown wiki is the main knowledge layer.
 - **Human role:** Humans can always correct, refresh, and reorganize maintained pages.
 - **Adoption:** Setup should remain lightweight enough for personal use and easy friend trials.
 - **Repository shape:** This repo should stay focused on skill definitions, schema files, templates, examples, and usage guidance.
+- **Obsidian stance:** Obsidian is optional and should be treated as a convenience layer for browsing, navigation, and search rather than as a workflow prerequisite.
 
 ## Workflow Contract
 
@@ -36,10 +37,10 @@ The main workflow actions are:
 - Keep `index.md` lightweight.
 - Treat human correction as a first-class workflow.
 
-## Vault Structure
+## Workspace Structure
 
 ```text
-vault-root/
+workspace-root/
 ├── CLAUDE.md
 ├── index.md
 ├── log.md

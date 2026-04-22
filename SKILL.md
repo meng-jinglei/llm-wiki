@@ -1,6 +1,6 @@
 ---
 name: llm-wiki
-description: Run a skill-first knowledge workflow inside an Obsidian vault
+description: Run a skill-first knowledge workflow inside a local Markdown workspace
 argument-hint: "<url, file, text, question, page, or action>"
 allowed-tools:
   - Read
@@ -13,13 +13,13 @@ allowed-tools:
 ---
 
 <objective>
-Run a persistent, skill-first knowledge workflow inside an Obsidian vault. Treat raw sources as traceable inputs, maintain wiki pages as the main knowledge layer, and help the user keep the wiki current through capture, ingest, query, review, curation, and correction.
+Run a persistent, skill-first knowledge workflow inside a local Markdown workspace. Treat raw sources as traceable inputs, maintain wiki pages as the main knowledge layer, and help the user keep the wiki current through capture, ingest, query, review, curation, and correction. Obsidian is an optional interface and enhancement layer, not a workflow prerequisite.
 </objective>
 
 <inputs>
 User input may be one of these:
 - a URL to capture
-- a local file path inside or outside the vault
+- a local file path inside or outside the workspace
 - pasted text content
 - a question to answer from the wiki
 - a request to review, reorganize, merge, split, rename, or refresh wiki pages
@@ -27,7 +27,7 @@ User input may be one of these:
 </inputs>
 
 <vault_assumptions>
-- Work inside an Obsidian vault.
+- Work inside a local Markdown workspace that Claude can read and update.
 - Prefer direct filesystem reads and writes for reliability.
 - If the `obsidian` CLI is available, treat it as an optional enhancement for search and navigation.
 - If the CLI is unavailable, fall back to `Glob` and `Grep`.
@@ -44,7 +44,7 @@ The wiki is the primary answer surface. Raw sources are traceable inputs, not th
 </core_model>
 
 <path_rule>
-Always annotate meaningful file operations with vault-relative paths.
+Always annotate meaningful file operations with workspace-relative paths.
 
 Examples:
 - `→ 写入: raw/sources/article-name.md`
@@ -64,7 +64,7 @@ Examples:
 - Default to the smallest coherent change set that satisfies the workflow.
 - If a request could fit multiple workflows, choose the narrowest workflow that preserves the user's intent.
 - If a workflow writes files, always report touched paths grouped by created, updated, or unchanged.
-- If a query result is worth keeping, ask before saving it back into the vault.
+- If a query result is worth keeping, ask before saving it back into the workspace.
 </global_rules>
 
 <large_file_protocol>
@@ -146,11 +146,11 @@ Do not present inferred structure as if it were an official table of contents.
 <workflows>
 
 ## init
-Use when the vault does not yet have the required workflow files and folders.
+Use when the workspace does not yet have the required workflow files and folders.
 
 Steps:
-1. Determine the Obsidian vault path.
-2. Verify the path points to an Obsidian vault.
+1. Determine the workspace root.
+2. Verify the path is a local workspace suitable for the llm-wiki structure.
 3. Create these paths if missing:
    - `raw/sources/`
    - `raw/assets/`
@@ -246,7 +246,7 @@ Steps:
 
 <process>
 1. Determine whether the request is init, capture, ingest, query, review, or curate.
-2. Resolve the vault path before touching files.
+2. Resolve the workspace root before touching files.
 3. Prefer editing existing pages over creating duplicates.
 4. Keep raw sources immutable once captured.
 5. Treat user corrections as high-priority signals for page refresh.

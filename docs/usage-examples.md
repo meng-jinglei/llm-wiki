@@ -18,8 +18,8 @@ If the request is ambiguous, the skill should choose the narrowest workflow that
 ## 1. Init
 
 ### Example prompts
-- `Initialize this Obsidian vault for llm-wiki.`
-- `Repair the llm-wiki structure in this vault without overwriting existing notes.`
+- `Initialize this workspace for llm-wiki.`
+- `Repair the llm-wiki structure in this workspace without overwriting existing notes.`
 
 ### Expected behavior
 - create or repair the required folders and protocol files
@@ -129,7 +129,7 @@ If the request is ambiguous, the skill should choose the narrowest workflow that
 
 ### Example prompts
 - `Based on this wiki, what are the main differences between RAG and an LLM wiki?`
-- `Answer from the maintained wiki first: how does this vault currently describe tool-backed workflows?`
+- `Answer from the maintained wiki first: how does this workspace currently describe tool-backed workflows?`
 - `What does the wiki currently say about page correction and refresh?`
 
 ### Expected behavior
@@ -154,7 +154,7 @@ If the request is ambiguous, the skill should choose the narrowest workflow that
 ### Example prompts
 - `Save that answer as an analysis page.`
 - `Turn the previous answer into a comparison page.`
-- `Keep this result in the vault as a durable note.`
+- `Keep this result in the workspace as a durable note.`
 
 ### Expected behavior
 - write to `wiki/analyses/` or `wiki/comparisons/`
@@ -190,7 +190,7 @@ If the request is ambiguous, the skill should choose the narrowest workflow that
 - `Merge these two concept pages.`
 - `Split this page into two narrower topics.`
 - `Rename this entity page and update the links.`
-- `Rewrite the overview page so it reflects the current vault better.`
+- `Rewrite the overview page so it reflects the current workspace better.`
 
 ### Expected behavior
 - read the nearby context first
@@ -217,7 +217,7 @@ Use prompts that specify:
 - the workflow action
 - the target source or page
 - whether to preserve existing structure
-- whether to save results back into the vault
+- whether to save results back into the workspace
 
 Examples:
 - `Ingest this source, update existing pages first, and list touched paths.`
@@ -234,7 +234,7 @@ Less reliable:
 More reliable:
 - `Capture this URL into raw/sources/ and stop there.`
 - `Ingest this source and update the relevant concept pages.`
-- `Review this vault for outdated claims, but do not modify files yet.`
+- `Review this workspace for outdated claims, but do not modify files yet.`
 
 ## 11. Source map prompt patterns
 

@@ -2,13 +2,13 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
-A Claude Code skill for running a skill-first knowledge workflow inside your Obsidian vault.
+A Claude Code skill for running a skill-first knowledge workflow inside a local Markdown workspace.
 
 Instead of treating every question as a fresh retrieval task, `llm-wiki` helps Claude maintain a persistent Markdown wiki that compounds over time:
 
 - raw sources stay traceable
 - wiki pages are updated instead of constantly recreated
-- useful answers can be saved back into the vault
+- useful answers can be saved back into the workspace
 - humans keep the right to correct, refresh, and reorganize the wiki
 
 ## What this repository is
@@ -18,9 +18,9 @@ This repository is a **skill protocol repository**, not a standalone runtime app
 It contains:
 
 - `SKILL.md` — the publishable Claude Code skill
-- `docs/` — Obsidian setup, workflow guidance, and usage examples
-- `templates/` — canonical vault files and page templates
-- `examples/` — a starter vault showing the intended output shape
+- `docs/` — filesystem-first workflow guidance, optional Obsidian integration, and usage examples
+- `templates/` — canonical workspace files and page templates
+- `examples/` — a starter workspace showing the intended output shape
 
 ## Core model
 
@@ -36,7 +36,7 @@ The wiki is meant to be a persistent, compounding knowledge artifact rather than
 
 The v1 workflow contract exposes these main actions:
 
-- `init` — initialize or repair the vault structure and core protocol files
+- `init` — initialize or repair the workspace structure and core protocol files
 - `capture` — save a URL, file, or pasted text into the raw layer
 - `ingest` — turn a source into wiki updates
 - `query` — answer from the wiki first, then optionally save the result back
@@ -68,16 +68,24 @@ Or clone this repository into your skills directory:
 git clone https://github.com/meng-jinglei/llm-wiki.git ~/.claude/skills/llm-wiki
 ```
 
-## Obsidian integration
+## Filesystem-first workflow
 
-This skill is designed for an Obsidian vault.
+This skill is designed to work directly on a normal local Markdown workspace.
 
 - Prefer direct filesystem reads and writes for reliability
+- Keep the llm-wiki schema under the workspace root
+- Use workspace-relative paths when reporting meaningful file operations
+- Treat Obsidian as optional rather than required
+
+## Optional Obsidian integration
+
+If you already use Obsidian, it can serve as a convenient interface for browsing, searching, and navigating the same workspace.
+
 - Use the Obsidian CLI as an optional enhancement when available
 - Fall back to file search when the CLI is unavailable
 - Only trigger GUI-opening actions when explicitly requested
 
-See [docs/obsidian-setup.md](docs/obsidian-setup.md) for setup guidance and [docs/usage-examples.md](docs/usage-examples.md) for workflow-oriented prompt examples.
+See [docs/obsidian-setup.md](docs/obsidian-setup.md) for optional integration guidance and [docs/usage-examples.md](docs/usage-examples.md) for workflow-oriented prompt examples.
 
 ## Repository structure
 
@@ -105,13 +113,12 @@ llm-wiki/
 ## Templates vs examples
 
 - `templates/` contains reusable protocol files and page templates used during initialization
-- `examples/` contains a readable starter vault that demonstrates the intended structure and tone
+- `examples/` contains a readable starter workspace that demonstrates the intended structure and tone
 
 ## Requirements
 
 - Claude Code
-- Obsidian
-- An Obsidian vault
+- A local Markdown workspace
 
 ## License
 

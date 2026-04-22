@@ -1,17 +1,17 @@
-# llm-wiki — Vault Protocol
+# llm-wiki — Workspace Protocol
 
-This vault uses a **skill-first knowledge workflow** inside Obsidian.
+This workspace uses a **skill-first knowledge workflow**.
 
 The goal is to keep a persistent wiki that becomes more useful over time:
 - new sources are captured and traced
 - maintained pages are refreshed instead of constantly recreated
-- useful answers can be saved back into the vault
+- useful answers can be saved back into the workspace
 - humans can always correct outdated or inaccurate pages
 
 ## Structure
 
 ```text
-vault-root/
+workspace-root/
 ├── CLAUDE.md
 ├── index.md
 ├── log.md
@@ -26,6 +26,8 @@ vault-root/
     ├── comparisons/
     └── overview.md
 ```
+
+Obsidian may be used as an optional interface for this same directory, but it is not required.
 
 ## Rules
 
@@ -90,7 +92,7 @@ Allowed prompts include:
 
 ## Path reporting
 
-Use vault-relative paths when reporting file operations.
+Use workspace-relative paths when reporting file operations.
 
 Examples:
 - `→ 写入: wiki/concepts/attention.md`
