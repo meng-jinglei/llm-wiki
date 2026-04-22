@@ -2,22 +2,63 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
-一个 Claude Code skill，用于在你的 Obsidian vault 中构建和维护 LLM 驱动的 wiki。
+一个用于在 Obsidian vault 中运行 **skill-first 知识沉淀工作流** 的 Claude Code skill。
 
-它遵循 LLM Wiki 模式：原始资料保持不可变，LLM 负责维护结构化 wiki 页面，并且回答结果也可以回写到 vault 中，让知识随着使用不断积累。
+`llm-wiki` 不把每次提问都当作一次新的临时检索，而是帮助 Claude 持续维护一个可积累的 Markdown wiki：
 
-## 这个仓库包含什么
+- 原始来源保持可追溯
+- wiki 页面优先被更新，而不是不断重建
+- 有价值的回答可以回写到 vault
+- 人类始终保留纠错、刷新和重组 wiki 的权利
+
+## 这个仓库是什么
+
+这个仓库是一个 **skill 协议仓库**，不是独立的 runtime 应用。
+
+它包含：
 
 - `SKILL.md` — 可发布的 Claude Code skill 文件
-- `docs/` — 面向用户的配置与使用文档
-- `templates/` — skill 初始化 vault wiki 时可使用的模板文件
-- `examples/` — 一个 starter vault 示例，用来展示目标输出结构
+- `docs/` — Obsidian 配置、工作流说明和使用示例
+- `templates/` — 初始化 vault 时使用的协议文件与页面模板
+- `examples/` — 一个 starter vault 示例，用来展示目标结构
+
+## 核心模型
+
+`llm-wiki` 依赖三层结构：
+
+1. **Raw layer** — `raw/` 下的来源与附件
+2. **Wiki layer** — `wiki/` 下的维护型知识页
+3. **Schema layer** — `CLAUDE.md` 与 skill 本身定义的规则
+
+目标是让 wiki 成为一个会持续复利的知识中间层，而不是一次性摘要的堆积。
+
+## 主工作流
+
+v1 对外暴露以下主要动作：
+
+- `init` — 初始化或修复 vault 结构与核心协议文件
+- `capture` — 将 URL、文件或粘贴文本保存到 raw layer
+- `ingest` — 将一个 source 沉淀为 wiki 更新
+- `query` — 优先从 wiki 回答，并在需要时回写有价值结果
+- `review` — 检查矛盾、漂移、过时信息和缺失链接
+- `curate` — 在人工主导下执行合并、拆分、重命名和结构整理
+
+## 工作流原则
+
+- `raw/` 在 capture 后保持不可变
+- 优先更新已有页面，而不是制造近重复页
+- 优先从 wiki 回答，而不是总回原始来源
+- 冲突应显式暴露，而不是被静默抹平
+- 人类纠错是一级能力，不是例外情况
+- 重要动作都应在 `log.md` 中留下记录
+- `index.md` 只做轻入口，不做无限膨胀的大总表
 
 ## 安装
 
 将 skill 复制到你的 Claude Code skills 目录：
 
 ```bash
+mkdir -p ~/.claude/skills/llm-wiki
 cp SKILL.md ~/.claude/skills/llm-wiki/SKILL.md
 ```
 
@@ -27,27 +68,16 @@ cp SKILL.md ~/.claude/skills/llm-wiki/SKILL.md
 git clone https://github.com/meng-jinglei/llm-wiki.git ~/.claude/skills/llm-wiki
 ```
 
-## 这个 skill 可以做什么
-
-这个 skill 支持以下工作流：
-
-- `init` — 在 Obsidian vault 中初始化 wiki 结构
-- `clip` — 将网页内容抓取到 `raw/sources/`
-- `ingest` — 把来源资料转化为结构化 wiki 页面
-- `query` — 基于已经积累的 wiki 内容回答问题
-- `lint` — 检查 wiki 中的矛盾、过时信息和维护问题
-- `browse` — 在 Obsidian 中打开目标页面
-
 ## Obsidian 集成
 
 这个 skill 设计为在 Obsidian vault 中工作。
 
-- 优先使用直接文件系统读写，以保证稳定性
-- 当 Obsidian CLI 可用时，优先使用 `obsidian search`
+- 优先使用直接文件系统读写，保证稳定性
+- Obsidian CLI 是可选增强，不是强依赖
 - 当 CLI 不可用时，回退到文件搜索
 - 只有在用户明确要求时，才执行 GUI 打开动作
 
-详细配置说明见 [docs/obsidian-setup.md](docs/obsidian-setup.md)。
+详细说明见 [docs/obsidian-setup.md](docs/obsidian-setup.md)，使用示例见 [docs/usage-examples.md](docs/usage-examples.md)。
 
 ## 仓库结构
 
@@ -74,8 +104,8 @@ llm-wiki/
 
 ## templates 和 examples 的区别
 
-- `templates/` 包含 skill 初始化时可复用的模板输入
-- `examples/` 包含一个供人阅读和参考的示例结果
+- `templates/` 包含初始化时使用的可复用协议文件与页面模板
+- `examples/` 包含一个供人阅读和参考的 starter vault 示例
 
 ## 依赖要求
 

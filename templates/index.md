@@ -1,21 +1,20 @@
-# LLM Wiki — Index
+# llm-wiki — Index
 
-A catalog of all pages in this wiki. Updated after every ingest or creation.
+This is the lightweight entry point for the vault.
 
-## Overview
-- [[wiki/overview]] — High-level synthesis of the entire knowledge base
+Use it to point toward the main overview, major topics, important source pages, and durable analyses. Do not try to list everything.
 
-## Entities
-_(Specific things: people, organizations, products, papers)_
+## Start Here
+- [[wiki/overview]] — High-level orientation for this vault
 
-## Concepts
-_(Ideas, techniques, frameworks, phenomena)_
+## Core Topics
+- Add the most important concept and entity pages here
 
-## Sources
-_(Per-source summary pages, one per ingested document)_
+## Important Sources
+- Add major source pages worth revisiting here
 
-## Comparisons
-_(Side-by-side analysis of related topics)_
+## Durable Analyses
+- Add saved analyses and comparisons worth reusing here
 
-## Analyses
-_(Exploration outputs, answers worth keeping, insights)_
+## Recent Maintenance Focus
+- Optionally note pages currently being refreshed, reviewed, or reorganized

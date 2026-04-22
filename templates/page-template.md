@@ -1,26 +1,33 @@
 ---
 title: <Page Title>
-type: <entity | concept | source | analysis | comparison>
-tags: [<relevant tags>]
-sources: [<raw file reference>]
+type: <source | concept | entity | analysis | comparison>
+sources: [<raw or wiki source references>]
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
+status: stable
 ---
 
 # <Page Title>
 
 <One-paragraph summary>
 
-## Key Points
-- <Point 1>
-- <Point 2>
-- <Point 3>
+## What It Is
 
-## Details
+<Short explanation of the page subject or scope>
 
-<Body — use [[wiki/...]] wikilinks for cross-references>
+## Current Understanding
+
+<Main machine-maintained content. Prefer clear, stable statements and explicit uncertainty when needed.>
+
+## Evidence and Sources
+- [[wiki/sources/...]]
+- `raw/sources/...md`
+
+## Open Questions or Tensions
+- <Unresolved question, disagreement, or uncertainty>
 
 ## Related
 - [[wiki/concepts/...]]
 - [[wiki/entities/...]]
-- [[wiki/sources/...]]
+- [[wiki/analyses/...]]
+- [[wiki/comparisons/...]]

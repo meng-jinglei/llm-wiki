@@ -2,22 +2,63 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
-A Claude Code skill for building and maintaining an LLM-powered wiki inside your Obsidian vault.
+A Claude Code skill for running a skill-first knowledge workflow inside your Obsidian vault.
 
-It follows the LLM Wiki pattern: raw sources stay immutable, the LLM maintains structured wiki pages, and answers can be fed back into the vault so knowledge compounds over time.
+Instead of treating every question as a fresh retrieval task, `llm-wiki` helps Claude maintain a persistent Markdown wiki that compounds over time:
 
-## What this repository contains
+- raw sources stay traceable
+- wiki pages are updated instead of constantly recreated
+- useful answers can be saved back into the vault
+- humans keep the right to correct, refresh, and reorganize the wiki
+
+## What this repository is
+
+This repository is a **skill protocol repository**, not a standalone runtime application.
+
+It contains:
 
 - `SKILL.md` — the publishable Claude Code skill
-- `docs/` — user-facing setup and usage documentation
-- `templates/` — files the skill can use when initializing a vault wiki
-- `examples/` — a starter vault example showing the intended output shape
+- `docs/` — Obsidian setup, workflow guidance, and usage examples
+- `templates/` — canonical vault files and page templates
+- `examples/` — a starter vault showing the intended output shape
+
+## Core model
+
+`llm-wiki` works with three layers:
+
+1. **Raw layer** — source capture and attachments under `raw/`
+2. **Wiki layer** — maintained knowledge pages under `wiki/`
+3. **Schema layer** — workflow and maintenance rules in `CLAUDE.md` and the skill itself
+
+The wiki is meant to be a persistent, compounding knowledge artifact rather than a pile of one-off summaries.
+
+## Main workflows
+
+The v1 workflow contract exposes these main actions:
+
+- `init` — initialize or repair the vault structure and core protocol files
+- `capture` — save a URL, file, or pasted text into the raw layer
+- `ingest` — turn a source into wiki updates
+- `query` — answer from the wiki first, then optionally save the result back
+- `review` — inspect the wiki for contradictions, drift, stale claims, and missing links
+- `curate` — perform human-led restructuring such as merging, splitting, renaming, or reorganizing pages
+
+## Workflow principles
+
+- Keep `raw/` immutable after capture
+- Prefer updating existing pages over creating near-duplicates
+- Use the wiki as the primary answer surface, not raw material
+- Surface contradictions instead of silently flattening them
+- Treat human correction as a first-class workflow
+- Record meaningful actions in `log.md`
+- Keep `index.md` as a lightweight entry point, not a giant registry of everything
 
 ## Install
 
 Copy the skill into your Claude Code skills directory:
 
 ```bash
+mkdir -p ~/.claude/skills/llm-wiki
 cp SKILL.md ~/.claude/skills/llm-wiki/SKILL.md
 ```
 
@@ -27,27 +68,16 @@ Or clone this repository into your skills directory:
 git clone https://github.com/meng-jinglei/llm-wiki.git ~/.claude/skills/llm-wiki
 ```
 
-## What the skill does
-
-The skill supports these workflows:
-
-- `init` — initialize wiki structure inside an Obsidian vault
-- `clip` — capture a web page into `raw/sources/`
-- `ingest` — turn a source into structured wiki pages
-- `query` — answer questions from the accumulated wiki
-- `lint` — review the wiki for contradictions and maintenance issues
-- `browse` — open a target page in Obsidian
-
 ## Obsidian integration
 
-The skill is designed to work inside an Obsidian vault.
+This skill is designed for an Obsidian vault.
 
 - Prefer direct filesystem reads and writes for reliability
-- Use `obsidian search` when the Obsidian CLI is available
+- Use the Obsidian CLI as an optional enhancement when available
 - Fall back to file search when the CLI is unavailable
-- Only use GUI-opening actions when explicitly requested
+- Only trigger GUI-opening actions when explicitly requested
 
-See setup details in [docs/obsidian-setup.md](docs/obsidian-setup.md).
+See [docs/obsidian-setup.md](docs/obsidian-setup.md) for setup guidance and [docs/usage-examples.md](docs/usage-examples.md) for workflow-oriented prompt examples.
 
 ## Repository structure
 
@@ -55,6 +85,7 @@ See setup details in [docs/obsidian-setup.md](docs/obsidian-setup.md).
 llm-wiki/
 ├── SKILL.md
 ├── README.md
+├── README.zh-CN.md
 ├── docs/
 │   └── obsidian-setup.md
 ├── templates/
@@ -73,8 +104,8 @@ llm-wiki/
 
 ## Templates vs examples
 
-- `templates/` contains reusable initialization inputs for the skill
-- `examples/` contains a human-readable sample result for reference
+- `templates/` contains reusable protocol files and page templates used during initialization
+- `examples/` contains a readable starter vault that demonstrates the intended structure and tone
 
 ## Requirements
 

@@ -1,5 +1,12 @@
 # Overview
 
-> This wiki is a persistent, compounding knowledge base maintained by an LLM. See [[CLAUDE]] for how it works.
+> This vault is a skill-first knowledge workspace maintained inside Obsidian. See [[CLAUDE]] for the workflow rules.
 
-Start by dropping a source into `raw/sources/` and saying `/llm-wiki ingest` — or just describe something you want to explore.
+Use this wiki as a maintained knowledge layer:
+- capture new sources into `raw/sources/`
+- ingest them into `wiki/` pages
+- query the wiki first
+- save valuable answers back into the vault
+- review and correct pages over time
+
+This page should eventually summarize the major themes, entities, and open questions in the vault.
