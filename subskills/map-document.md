@@ -10,6 +10,20 @@ allowed-tools: [Bash, Read, Write]
 Extract the outline or heading structure from a PDF, DOCX, or PPTX file,
 then create a source map at `raw/sources/<slug>.map.md`.
 
+### Tool Assumptions
+
+| Tool | Required | Install |
+|------|----------|---------|
+| `uv` | Yes | `curl -LsSf https://astral.sh/uv/install.sh \| sh` (Git Bash / Linux / macOS) |
+| `pdfplumber` | Via --with | `uv run --with pdfplumber` |
+| `PyPDF2` | Via --with | `uv run --with PyPDF2` |
+| `python-docx` | Via --with | `uv run --with python-docx` |
+| `python-pptx` | Via --with | `uv run --with python-pptx` |
+
+**Windows (Git Bash/MSYS) notes:**
+- Use `raw/.tmp/` for all temporary files (script files, intermediate data) — never rely on `/tmp/`
+- Always pass file paths as command-line arguments, not via stdin/heredoc — avoids quoting issues with spaces and unicode characters
+
 ### When to use
 
 - User provides a large document and wants to see its structure before ingesting
@@ -20,10 +34,14 @@ then create a source map at `raw/sources/<slug>.map.md`.
 
 1. Confirm the file exists and is a supported type: `.pdf`, `.docx`, `.pptx`.
 2. Derive the slug from the filename (kebab-case).
-3. Run the structure extraction script via `uv run --with`:
+3. **Write the Python script to a temp file first** (avoids heredoc quoting issues with spaces and unicode):
 
-```bash
-uv run --with PyPDF2 --with pdfplumber --with python-docx --with python-pptx python - << 'PYEOF'
+```
+Use Write tool to create `raw/.tmp/llm_wiki_map_doc.py` with the script below.
+The project must have a `raw/` directory already (created by `init` or `capture`).
+```
+
+```python
 import sys, json
 from pathlib import Path
 
@@ -80,7 +98,7 @@ def extract_pptx_structure(filepath):
             structure.append({'title': title[:120], 'slide': i + 1, 'level': 1})
         elif len(structure) < 500:
             for shape in slide.shapes:
-                if hasattr(shape, 'text') and shape.text.strip():
+                if hasattr(shape, "text") and shape.text.strip():
                     structure.append({'title': shape.text.strip()[:120], 'slide': i + 1, 'level': 1})
                     break
     return structure, 'explicit_toc', len(prs.slides)
@@ -104,20 +122,17 @@ else:
     sys.stderr.write(f'Unsupported file type: {ext}\n')
     sys.exit(1)
 
-json.dump(output, sys.stdout)
-PYEOF
+# Output as JSON to stdout (pipe to jq or redirect as needed)
+json.dump(output, sys.stdout, ensure_ascii=False)
 ```
 
-4. Parse the JSON output. If extraction failed, report the error and stop.
-5. Generate the source map file at `raw/sources/<slug>.map.md`:
-
+4. **Run the script with uv, passing the file path as an argument**:
 ```bash
-SLUG="<slug from filename>"
-OUTLINE_JSON="$(cat /tmp/llm-wiki-structure.json 2>/dev/null || echo '{}')"
-# The outline is already in the JSON; write the map file directly
+uv run --with PyPDF2 --with pdfplumber --with python-docx --with python-pptx python raw/.tmp/llm_wiki_map_doc.py "<filepath>"
 ```
 
-6. Write the source map using this template structure:
+5. Parse the JSON output. If extraction failed, report the error and stop.
+6. Generate the source map file at `raw/sources/<slug>.map.md`. Use this template:
 
 ```
 ---
@@ -158,9 +173,12 @@ Run `ingest` without `--target` to start from the highest-priority section.
 8. Append a log entry to `log.md`:
    `## [YYYY-MM-DD] map-document | <filename> — structure mapped (N sections, N pages)`
 
-9. Report the created map file path and suggest next actions.
+9. **After reporting the map file path, state the next action:**
+   - Read the source map and identify the highest-priority pending section
+   - "Suggested next: run `ingest` on section `<id>` (chapter X, priority:high)"
 
 ### Output
 
 Report these paths:
 - Created: `raw/sources/<slug>.map.md`
+- Temp script: `raw/.tmp/llm_wiki_map_doc.py` (session-scoped)

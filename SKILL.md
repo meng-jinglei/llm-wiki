@@ -60,6 +60,30 @@ The workflow assumes three layers:
 The wiki is the primary answer surface. Raw sources are traceable inputs, not the default response layer.
 </core_model>
 
+<tool_assumptions>
+The skill delegates heavy work (PDF parsing, code indexing) to external tools.
+All tool dependencies are declared here with fallbacks.
+
+| Tool | Purpose | Required | Fallback |
+|------|---------|----------|---------|
+| `uv` | Python dependency isolation | Yes | None — must be installed |
+| `ctags` | Code symbol indexing | No (preferred) | tree-sitter (Option B in index-codebase) |
+| `tree-sitter` + `tree-sitter-c` | C/C++ AST parsing for symbol index | Via --with | Python regex (legacy, deprecated) |
+| `pdfplumber` | PDF structure extraction | Via --with | PyPDF2 via --with |
+
+**Install `uv`:** `curl -LsSf https://astral.sh/uv/install.sh | sh`
+(Git Bash / Linux / macOS — same command on all three)
+
+**Install `ctags`:**
+- macOS: `brew install universal-ctags`
+- Linux: `apt install universal-ctags`
+- Windows: `scoop install ctags` or download from github.com/universal-ctags/ctags-win32
+
+**Platform notes:**
+- On Windows (Git Bash / MSYS): `/tmp/` may not be writable — write outputs to project-internal paths (`raw/sources/`) instead
+- Always pass file paths as command-line arguments, never via stdin or heredoc — avoids quoting issues with spaces and unicode characters
+</tool_assumptions>
+
 <path_rule>
 Always annotate meaningful file operations with workspace-relative paths.
 
@@ -246,6 +270,9 @@ Steps:
 5. If the source is large or hard to read end-to-end, record a lightweight source map in `raw/sources/<slug>.md` with the file path, source type, major sections, and useful page ranges when known.
 6. Append a capture entry to `log.md`.
 7. Report the saved path and suggest ingest when appropriate.
+   If a source map was created, read it and state:
+   - which section has `status:pending` and `priority:high`
+   - what the next `ingest` command should target
 
 ## ingest
 Use when the user wants a source turned into wiki updates.
@@ -335,6 +362,11 @@ Steps:
 8. Report all touched paths and suggest the next step (likely `code-anchor`).
 
 Do not ingest any section during init. The goal is to build the skeleton and set priorities.
+
+After project-init, state the concrete next steps:
+  1. `map-document` on <manual-file> → creates `raw/sources/<slug>.map.md`
+  2. `index-codebase` on <code-dir> → creates `raw/sources/<slug>.codebase.md`
+  3. `ingest` on the highest-priority pending section from the source map
 
 ## code-anchor
 Use when the user points to a source file and wants wiki knowledge about it,
