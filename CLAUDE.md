@@ -77,6 +77,7 @@ Treat this repository as a real project under git version control, not as a disp
 - When reporting completed work, be ready to summarize the git-visible change set.
 - Preserve repository hygiene so the skill, templates, examples, and protocol docs can evolve as a maintained project.
 - When `SKILL.md` changes, do not immediately update the installed Claude Code skill or push the change. Show the change first, confirm with the user, and only then apply or publish it.
+- **Before pushing, always get the user's approval first.** Do not push without explicit confirmation. Show the pending changes and wait for "可以推送" or similar before running `git push`.
 
 ## GSD Workflow Enforcement
 
