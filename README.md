@@ -91,23 +91,40 @@ See [docs/obsidian-setup.md](docs/obsidian-setup.md) for optional integration gu
 
 ```text
 llm-wiki/
-├── SKILL.md
+├── SKILL.md                  ← Skill entry (index + routing only)
+├── CHANGELOG.md
 ├── README.md
 ├── README.zh-CN.md
 ├── docs/
-│   └── obsidian-setup.md
-├── templates/
+│   ├── usage-examples.md    ← Workflow examples and prompt patterns
+│   └── obsidian-setup.md    ← Optional Obsidian integration guide
+├── templates/               ← Canonical workspace files and page templates
 │   ├── index.md
 │   ├── log.md
 │   ├── page-template.md
+│   ├── wiki-overview.md
 │   └── vault-CLAUDE.md
-└── examples/
-    └── starter-vault/
-        ├── CLAUDE.md
-        ├── index.md
-        ├── log.md
-        └── wiki/
-            └── overview.md
+├── examples/
+│   └── starter-vault/       ← Runnable starter workspace
+│       ├── CLAUDE.md
+│       ├── index.md
+│       ├── log.md
+│       └── wiki/
+│           └── overview.md
+└── sub-skills/              ← Workflow bodies (SKILL.md is index + routing only)
+    ├── tasks/               ← 8 workflow task files
+    │   ├── init.md
+    │   ├── capture.md
+    │   ├── ingest.md
+    │   ├── query.md
+    │   ├── review.md
+    │   ├── curate.md
+    │   ├── project-init.md
+    │   └── code-anchor.md
+    ├── tools/               ← Tool script references
+    │   ├── map-document.md
+    │   └── index-codebase.md
+    └── runtime/             ← (reserved)
 ```
 
 ## Templates vs examples

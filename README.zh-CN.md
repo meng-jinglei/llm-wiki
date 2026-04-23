@@ -91,23 +91,40 @@ git clone https://github.com/meng-jinglei/llm-wiki.git ~/.claude/skills/llm-wiki
 
 ```text
 llm-wiki/
-├── SKILL.md
+├── SKILL.md                  ← Skill 入口（索引 + 路由）
+├── CHANGELOG.md
 ├── README.md
 ├── README.zh-CN.md
 ├── docs/
-│   └── obsidian-setup.md
-├── templates/
+│   ├── usage-examples.md    ← 工作流示例和提示模式
+│   └── obsidian-setup.md    ← 可选的 Obsidian 集成说明
+├── templates/               ← 初始化工作区时使用的协议文件与模板
 │   ├── index.md
 │   ├── log.md
 │   ├── page-template.md
+│   ├── wiki-overview.md
 │   └── vault-CLAUDE.md
-└── examples/
-    └── starter-vault/
-        ├── CLAUDE.md
-        ├── index.md
-        ├── log.md
-        └── wiki/
-            └── overview.md
+├── examples/
+│   └── starter-vault/       ← 可运行的示例工作区
+│       ├── CLAUDE.md
+│       ├── index.md
+│       ├── log.md
+│       └── wiki/
+│           └── overview.md
+└── sub-skills/              ← 工作流正文（SKILL.md 仅保留路由）
+    ├── tasks/               ← 8 个工作流任务文件
+    │   ├── init.md
+    │   ├── capture.md
+    │   ├── ingest.md
+    │   ├── query.md
+    │   ├── review.md
+    │   ├── curate.md
+    │   ├── project-init.md
+    │   └── code-anchor.md
+    ├── tools/               ← 工具脚本引用
+    │   ├── map-document.md
+    │   └── index-codebase.md
+    └── runtime/             ← （预留）
 ```
 
 ## templates 和 examples 的区别

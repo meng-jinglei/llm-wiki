@@ -122,6 +122,25 @@ else:
     sys.stderr.write(f'Unsupported file type: {ext}\n')
     sys.exit(1)
 
+# Duplicate section ID detection: flag entries where multiple outline items
+# share the same title (case-insensitive), which would produce duplicate sXX IDs.
+seen_titles = {}
+dupes = []
+for i, item in enumerate(output.get('outline', [])):
+    key = item.get('title', '').strip().lower()
+    if key in seen_titles:
+        dupes.append({'index': i, 'title': item.get('title'), 'first_seen': seen_titles[key]})
+    else:
+        seen_titles[key] = i
+
+if dupes:
+    sys.stderr.write(f'WARNING: {len(dupes)} duplicate title(s) found in outline:\n')
+    for d in dupes[:10]:
+        sys.stderr.write(f'  [{d["index"]}] "{d["title"]}" — first seen at index {d["first_seen"]}\n')
+    sys.stderr.write('  IDs will be disambiguated. Review the map file to confirm correctness.\n')
+    # Annotate duplicate entries in output so the agent can handle them
+    output['_duplicate_titles'] = dupes
+
 # Output as JSON to stdout (pipe to jq or redirect as needed)
 json.dump(output, sys.stdout, ensure_ascii=False)
 ```
