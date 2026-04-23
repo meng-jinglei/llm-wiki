@@ -1,141 +1,57 @@
 # llm-wiki
 
-[English](README.md) · [简体中文](README.zh-CN.md)
+一个在本地 Markdown 工作区运行的 **skill-first 知识沉淀工作流**。
 
-A Claude Code skill for running a skill-first knowledge workflow inside a local Markdown workspace.
+不把每次提问当作从零检索，而是让 Claude 持续维护一个可积累的 wiki：原始来源可追溯，wiki 页面不断被更新和复用，有价值的回答可以写回工作区。
 
-Instead of treating every question as a fresh retrieval task, `llm-wiki` helps Claude maintain a persistent Markdown wiki that compounds over time:
+## 使用方式
 
-- raw sources stay traceable
-- wiki pages are updated instead of constantly recreated
-- useful answers can be saved back into the workspace
-- humans keep the right to correct, refresh, and reorganize the wiki
+在 Claude Code 中直接告诉它要做什么：
 
-## What this repository is
+| 你说 | Claude 做 |
+|------|----------|
+| `/llm-wiki 帮我对这个项目进行wiki化` | `project-init` — 扫描项目，搭建 raw/wiki 骨架 |
+| `/llm-wiki 把这份手册建档` | `ingest` — 提取知识，更新 wiki 页面 |
+| `/llm-wiki 问个问题` | `query` — 从 wiki 回答，声明来源 |
+| `/llm-wiki 检查一下wiki一致性` | `review` — 9 项健康检查 |
+| `/llm-wiki 帮我绑定代码和手册` | `code-anchor` — 双向绑定源码与 wiki |
+| `/llm-wiki 画出手册结构` | `map-document` — 提取 PDF 大纲 |
+| `/llm-wiki 索引这个代码目录` | `index-codebase` — 生成符号地图 |
 
-This repository is a **skill protocol repository**, not a standalone runtime application.
-
-It contains:
-
-- `SKILL.md` — the publishable Claude Code skill
-- `docs/` — filesystem-first workflow guidance, optional Obsidian integration, and usage examples
-- `templates/` — canonical workspace files and page templates
-- `examples/` — a starter workspace showing the intended output shape
-
-## Core model
-
-`llm-wiki` works with three layers:
-
-1. **Raw layer** — source capture and attachments under `raw/`
-2. **Wiki layer** — maintained knowledge pages under `wiki/`
-3. **Schema layer** — workflow and maintenance rules in `CLAUDE.md` and the skill itself
-
-The wiki is meant to be a persistent, compounding knowledge artifact rather than a pile of one-off summaries.
-
-## Main workflows
-
-The v1 workflow contract exposes these main actions:
-
-- `init` — initialize or repair the workspace structure and core protocol files
-- `capture` — save a URL, file, or pasted text into the raw layer
-- `ingest` — turn a source into wiki updates
-- `query` — answer from the wiki first, then optionally save the result back
-- `review` — inspect the wiki for contradictions, drift, stale claims, and missing links
-- `curate` — perform human-led restructuring such as merging, splitting, renaming, or reorganizing pages
-
-## Workflow principles
-
-- Keep `raw/` immutable after capture
-- Prefer updating existing pages over creating near-duplicates
-- Use the wiki as the primary answer surface, not raw material
-- Surface contradictions instead of silently flattening them
-- Treat human correction as a first-class workflow
-- Record meaningful actions in `log.md`
-- Keep `index.md` as a lightweight entry point, not a giant registry of everything
-
-## Install
-
-Copy the skill into your Claude Code skills directory:
+## 安装
 
 ```bash
 mkdir -p ~/.claude/skills/llm-wiki
-cp SKILL.md ~/.claude/skills/llm-wiki/SKILL.md
-```
-
-Or clone this repository into your skills directory:
-
-```bash
 git clone https://github.com/meng-jinglei/llm-wiki.git ~/.claude/skills/llm-wiki
 ```
 
-## Filesystem-first workflow
+## 核心原则
 
-This skill is designed to work directly on a normal local Markdown workspace.
+- `raw/` 在 capture 后不可变
+- 优先更新已有 wiki 页面，不造近重复页
+- 冲突必须显式暴露，不静默抹平
+- 人类纠错是一级能力
 
-- Prefer direct filesystem reads and writes for reliability
-- Keep the llm-wiki schema under the workspace root
-- Use workspace-relative paths when reporting meaningful file operations
-- Treat Obsidian as optional rather than required
+## 仓库结构
 
-## Optional Obsidian integration
-
-If you already use Obsidian, it can serve as a convenient interface for browsing, searching, and navigating the same workspace.
-
-- Use the Obsidian CLI as an optional enhancement when available
-- Fall back to file search when the CLI is unavailable
-- Only trigger GUI-opening actions when explicitly requested
-
-See [docs/obsidian-setup.md](docs/obsidian-setup.md) for optional integration guidance and [docs/usage-examples.md](docs/usage-examples.md) for workflow-oriented prompt examples.
-
-## Repository structure
-
-```text
+```
 llm-wiki/
-├── SKILL.md                  ← Skill entry (index + routing only)
+├── SKILL.md              ← Skill 入口
 ├── CHANGELOG.md
 ├── README.md
-├── README.zh-CN.md
-├── docs/
-│   ├── usage-examples.md    ← Workflow examples and prompt patterns
-│   └── obsidian-setup.md    ← Optional Obsidian integration guide
-├── templates/               ← Canonical workspace files and page templates
-│   ├── index.md
-│   ├── log.md
-│   ├── page-template.md
-│   ├── wiki-overview.md
-│   └── vault-CLAUDE.md
-├── examples/
-│   └── starter-vault/       ← Runnable starter workspace
-│       ├── CLAUDE.md
-│       ├── index.md
-│       ├── log.md
-│       └── wiki/
-│           └── overview.md
-└── sub-skills/              ← Workflow bodies (SKILL.md is index + routing only)
-    ├── tasks/               ← 8 workflow task files
-    │   ├── init.md
-    │   ├── capture.md
-    │   ├── ingest.md
-    │   ├── query.md
-    │   ├── review.md
-    │   ├── curate.md
-    │   ├── project-init.md
-    │   └── code-anchor.md
-    ├── tools/               ← Tool script references
-    │   ├── map-document.md
-    │   └── index-codebase.md
-    └── runtime/             ← (reserved)
+├── docs/                 ← 使用示例
+├── templates/            ← 初始化用的协议文件
+├── examples/             ← 示例工作区
+└── sub-skills/           ← 工作流正文
+    ├── tasks/            ← 8 个工作流任务
+    └── tools/            ← 工具脚本
 ```
 
-## Templates vs examples
-
-- `templates/` contains reusable protocol files and page templates used during initialization
-- `examples/` contains a readable starter workspace that demonstrates the intended structure and tone
-
-## Requirements
+## 依赖
 
 - Claude Code
-- A local Markdown workspace
+- `uv`（`curl -LsSf https://astral.sh/uv/install.sh | sh`）
+- `tree-sitter-languages`（通过 `uv run --with tree-sitter-languages` 自动安装）
 
 ## License
 
