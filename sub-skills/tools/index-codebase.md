@@ -1,53 +1,52 @@
 ---
 name: index-codebase
-description: Generate a symbol index for a source code directory using ctags or tree-sitter fallback.
+description: 使用 ctags 或 tree-sitter 后备方案为源代码目录生成符号索引
 argument-hint: "<directory>"
 allowed-tools: [Bash, Read, Write]
 ---
 
-## index-codebase
+## index-codebase（代码库索引）
 
-Generate a symbol index for a source code directory and create a
-codebase map at `raw/sources/<slug>.codebase.md`.
+为源代码目录生成符号索引，并在 `raw/sources/<slug>.codebase.md` 创建代码库地图。
 
-### Tool Assumptions
+### 工具依赖
 
-| Tool | Required | Install |
+| 工具 | 必需 | 安装 |
 |------|----------|---------|
-| `uv` | Yes | `curl -LsSf https://astral.sh/uv/install.sh \| sh` (Git Bash / Linux / macOS) |
-| `ctags` | No (preferred) | macOS: `brew install universal-ctags`; Linux: `apt install universal-ctags`; Windows: `scoop install ctags` or download from github.com/universal-ctags/ctags-win32 |
-| `tree-sitter-languages` | No (for Option B) | `uv run --with tree-sitter-languages` |
+| `uv` | 是 | `curl -LsSf https://astral.sh/uv/install.sh \| sh`（Git Bash / Linux / macOS） |
+| `ctags` | 否（首选） | macOS：`brew install universal-ctags`；Linux：`apt install universal-ctags`；Windows：`scoop install ctags` 或从 github.com/universal-ctags/ctags-win32 下载 |
+| `tree-sitter-languages` | 否（用于方案 B） | `uv run --with tree-sitter-languages` |
 
-**Windows (Git Bash/MSYS) notes:**
-- Use `raw/.tmp/` for all temporary files (script files, intermediate data) — never rely on `/tmp/`
-- If `ctags` is not available, Option B (tree-sitter) works without any external dependencies beyond the packages above
+**Windows（Git Bash/MSYS）说明：**
+- 所有临时文件（脚本文件、中间数据）使用 `raw/.tmp/` — 切勿依赖 `/tmp/`
+- 如果 `ctags` 不可用，方案 B（tree-sitter）无需上述包之外的外部依赖即可工作
 
-### When to use
+### 何时使用
 
-- User provides a directory of source code and wants it indexed
-- User says "index this codebase" or "map this source tree"
-- `project-init` identified a code directory that needs indexing
+- 用户提供源代码目录并希望建立索引
+- 用户说"索引这个代码库"或"映射这个源码树"
+- `project-init` 识别出需要索引的代码目录
 
-### Steps
+### 步骤
 
-1. Confirm the directory exists and contains source files.
-2. Derive the slug from the directory name (kebab-case).
-3. Check for `ctags`:
-   - Run `ctags --version`
-   - If found → use **Option A** below
-   - If not found → use **Option B** below
+1. 确认目录存在且包含源文件。
+2. 从目录名派生出 slug（kebab-case）。
+3. 检查 `ctags`：
+   - 运行 `ctags --version`
+   - 如果找到 → 使用下面的**方案 A**
+   - 如果未找到 → 使用下面的**方案 B**
 
 ---
 
-### Option A: ctags (preferred)
+### 方案 A：ctags（首选）
 
-Run ctags to generate a tags file. Write output to the project directory (not `/tmp/`):
+运行 ctags 生成 tags 文件。将输出写入项目目录（而非 `/tmp/`）：
 
 ```bash
 ctags -R --fields=+nKz --extras=+q --output-format=json -f "raw/sources/<slug>.tags.json" "<directory>"
 ```
 
-Parse the JSON tags file:
+解析 JSON tags 文件：
 
 ```bash
 python - << 'PYEOF'
@@ -91,12 +90,12 @@ PYEOF
 
 ---
 
-### Option B: tree-sitter (requires tree-sitter and tree-sitter-c)
+### 方案 B：tree-sitter（需要 tree-sitter 和 tree-sitter-c）
 
-**Step B1:** Write the Python script to a temp file first (avoids heredoc quoting issues):
+**步骤 B1：** 先将 Python 脚本写入临时文件（避免 heredoc 引号问题）：
 
 ```
-Use Write tool to create `raw/.tmp/llm_wiki_index_code.py` with the script below.
+使用 Write 工具将以下脚本创建为 `raw/.tmp/llm_wiki_index_code.py`。
 ```
 
 ```python
@@ -212,7 +211,7 @@ OUTPUT.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='ut
 print(f"Done: {result['total']} symbols indexed")
 ```
 
-**Step B2:** Run with uv, passing directory and output paths as arguments:
+**步骤 B2：** 使用 uv 运行，将目录和输出路径作为参数传递：
 
 ```bash
 uv run --with tree-sitter-languages python raw/.tmp/llm_wiki_index_code.py "<directory>" "raw/sources/<slug>.codebase.json"
@@ -220,76 +219,75 @@ uv run --with tree-sitter-languages python raw/.tmp/llm_wiki_index_code.py "<dir
 
 ---
 
-4. Parse the JSON output from Option A or B. It contains `total`, `counts`,
-   `kinds`, and `summary` (top 30-50 symbols per kind).
-5. Write the codebase map at `raw/sources/<slug>.codebase.md`:
+4. 解析方案 A 或 B 的 JSON 输出。包含 `total`、`counts`、`kinds` 和 `summary`（每类前 30-50 个符号）。
+5. 在 `raw/sources/<slug>.codebase.md` 写入代码库地图：
 
 ```
 ---
-title: "<directory name, title-cased>"
+title: "<目录名，标题式大写>"
 type: codebase_map
-root_path: "<absolute path>"
-file_count: <estimated from directory scan>
-primary_languages: [<language1>, <language2>]
+root_path: "<绝对路径>"
+file_count: <从目录扫描估算>
+primary_languages: [<语言1>, <语言2>]
 index_tool: <universal-ctags | tree-sitter>
 coverage_status: indexed
 ---
 
-# <title>
+# <标题>
 
-## Overview
-Brief description of this codebase (infer from directory structure).
+## 概述
+此代码库的简要描述（从目录结构推断）。
 
-## Directory Structure
+## 目录结构
 ```
-<first 2 levels of directory tree>
+<目录树前2层>
 ```
 
-## Key Symbols Index
-Top symbols from the index. Full data at `raw/sources/<slug>.codebase.json`.
+## 关键符号索引
+索引中的顶级符号。完整数据见 `raw/sources/<slug>.codebase.json`。
 
-### Functions
-| Symbol | File | Line |
+### 函数
+| 符号 | 文件 | 行号 |
 |--------|------|------|
-<for each function in summary['functions'] sorted by name:>
-| `<name>` | `<file>` | `<line>` |
+<在 summary['functions'] 中按名称排序的每个函数：>
+| `<名称>` | `<文件>` | `<行号>` |
 
-### Data Structures
-| Symbol | File | Line |
+### 数据结构
+| 符号 | 文件 | 行号 |
 |--------|------|------|
-<for each struct in summary['structs'] sorted by name:>
-| `<name>` | `<file>` | `<line>` |
+<在 summary['structs'] 中按名称排序的每个结构体：>
+| `<名称>` | `<文件>` | `<行号>` |
 
-### Enums
-| Symbol | File |
+### 枚举
+| 符号 | 文件 |
 |--------|------|
-<for each enum in summary['enums'] sorted by name:>
-| `<name>` | `<file>` |
+<在 summary['enums'] 中按名称排序的每个枚举：>
+| `<名称>` | `<文件>` |
 
-### Macros / Defines
-Top 30 macros by appearance:
-| Symbol | File |
+### 宏 / 定义
+出现最多的前 30 个宏：
+| 符号 | 文件 |
 |--------|------|
-<for each macro in summary['macros'] sorted by name:>
-| `<name>` | `<file>` |
+<在 summary['macros'] 中按名称排序的每个宏：>
+| `<名称>` | `<文件>` |
 
-## How to Use This Map
-- Run `code-anchor` to link a specific symbol to its wiki page.
-- Run `ingest` on the highest-priority section from the source map next.
-- Full symbol data: `raw/sources/<slug>.codebase.json`
+## 如何使用此地图
+- 运行 `code-anchor` 将特定符号链接到其 wiki 页面。
+- 接下来对来源地图中最高优先级章节执行 `ingest`。
+- 完整符号数据：`raw/sources/<slug>.codebase.json`
 ```
 
-6. Save the map file.
-7. Append a log entry to `log.md`:
-   `## [YYYY-MM-DD] index-codebase | <dirname> — N symbols indexed (N functions, N structs, N enums, N macros)`
-   Note: `typedefs` are counted under `structs` in the log summary.
+6. 保存地图文件。
+7. 在 `log.md` 中追加日志条目：
+   `## [YYYY-MM-DD] index-codebase | <dirname> — N 个符号已索引（N 个函数，N 个结构体，N 个枚举，N 个宏）`
+   注意：`typedefs` 在日志摘要中计入 `structs`。
 
-8. **After reporting the map file path, state the next action:**
-   - "Suggested next: run `code-anchor` to bind key functions to their wiki pages, then `ingest` on the highest-priority section from the source map"
+8. **报告地图文件路径后，说明下一步操作：**
+   - "建议下一步：运行 `code-anchor` 将关键函数绑定到其 wiki 页面，然后对来源地图中最高优先级章节执行 `ingest`"
 
-### Output
+### 输出
 
-Report these paths:
-- Created: `raw/sources/<slug>.codebase.md`
-- Raw data: `raw/sources/<slug>.codebase.json`
-- Temp script: `raw/.tmp/llm_wiki_index_code.py` (session-scoped, Option B only)
+报告以下路径：
+- 已创建：`raw/sources/<slug>.codebase.md`
+- 原始数据：`raw/sources/<slug>.codebase.json`
+- 临时脚本：`raw/.tmp/llm_wiki_index_code.py`（会话范围，仅方案 B）

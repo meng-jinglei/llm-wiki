@@ -1,28 +1,28 @@
 ---
 name: curate
-description: Human-led restructuring — merge, split, rename, reorganize wiki pages.
+description: 人工主导的重组 — 合并、拆分、重命名、重新组织 wiki 页面
 ---
 
-## curate
+## curate（整理）
 
-Use when the user wants human-led restructuring or refinement.
+当用户希望进行人工主导的重组或优化时使用。
 
-Examples:
-- merge duplicate pages
-- split overly large pages
-- rename pages
-- reorganize topic structure
-- rewrite a summary or overview page
-- refresh a page that the user says is wrong or outdated
+示例：
+- 合并重复页面
+- 拆分过大的页面
+- 重命名页面
+- 重新组织主题结构
+- 重写摘要或概述页面
+- 刷新用户指出错误或过时的页面
 
-### Steps
+### 步骤
 
-1. Read the target pages and nearby context.
-2. Explain the proposed structural change if it is non-trivial.
-3. Apply the smallest coherent set of edits.
-4. Update `index.md` and links if needed.
-5. Append a curation or correction entry to `log.md`.
-6. Report all touched paths.
+1. 读取目标页面及附近的上下文。
+2. 如果结构性变更较大，先解释建议的变更。
+3. 应用最小的连贯编辑集。
+4. 按需更新 `index.md` 和链接。
+5. 在 `log.md` 中追加一条整理或修正记录。
+6. 报告所有触及的路径。
 
 ### 输出结构
 

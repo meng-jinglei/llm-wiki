@@ -1,44 +1,44 @@
 ---
 name: map-document
-description: Extract outline/structure from a large document (PDF/DOCX/PPTX) and create a source map.
+description: 从大型文档（PDF/DOCX/PPTX）提取大纲/结构并创建来源地图
 argument-hint: "<file_path>"
 allowed-tools: [Bash, Read, Write]
 ---
 
-## map-document
+## map-document（文档映射）
 
-Extract the outline or heading structure from a PDF, DOCX, or PPTX file,
-then create a source map at `raw/sources/<slug>.map.md`.
+从 PDF、DOCX 或 PPTX 文件中提取大纲或标题结构，
+然后在 `raw/sources/<slug>.map.md` 创建来源地图。
 
-### Tool Assumptions
+### 工具依赖
 
-| Tool | Required | Install |
+| 工具 | 必需 | 安装 |
 |------|----------|---------|
-| `uv` | Yes | `curl -LsSf https://astral.sh/uv/install.sh \| sh` (Git Bash / Linux / macOS) |
-| `pdfplumber` | Via --with | `uv run --with pdfplumber` |
-| `PyPDF2` | Via --with | `uv run --with PyPDF2` |
-| `python-docx` | Via --with | `uv run --with python-docx` |
-| `python-pptx` | Via --with | `uv run --with python-pptx` |
+| `uv` | 是 | `curl -LsSf https://astral.sh/uv/install.sh \| sh`（Git Bash / Linux / macOS） |
+| `pdfplumber` | 通过 --with | `uv run --with pdfplumber` |
+| `PyPDF2` | 通过 --with | `uv run --with PyPDF2` |
+| `python-docx` | 通过 --with | `uv run --with python-docx` |
+| `python-pptx` | 通过 --with | `uv run --with python-pptx` |
 
-**Windows (Git Bash/MSYS) notes:**
-- Use `raw/.tmp/` for all temporary files (script files, intermediate data) — never rely on `/tmp/`
-- Always pass file paths as command-line arguments, not via stdin/heredoc — avoids quoting issues with spaces and unicode characters
+**Windows（Git Bash/MSYS）说明：**
+- 所有临时文件（脚本文件、中间数据）使用 `raw/.tmp/` — 切勿依赖 `/tmp/`
+- 始终将文件路径作为命令行参数传递，不通过 stdin/heredoc — 避免空格和 unicode 字符的引号问题
 
-### When to use
+### 何时使用
 
-- User provides a large document and wants to see its structure before ingesting
-- User says "map this PDF" or "index this document"
-- `capture` detected a large `.pdf`/`.docx`/`.pptx` file and suggested mapping
+- 用户提供大型文档并希望在导入前查看其结构
+- 用户说"映射这个 PDF"或"索引这个文档"
+- `capture` 检测到大型 `.pdf`/`.docx`/`.pptx` 文件并建议进行映射
 
-### Steps
+### 步骤
 
-1. Confirm the file exists and is a supported type: `.pdf`, `.docx`, `.pptx`.
-2. Derive the slug from the filename (kebab-case).
-3. **Write the Python script to a temp file first** (avoids heredoc quoting issues with spaces and unicode):
+1. 确认文件存在且为支持的格式：`.pdf`、`.docx`、`.pptx`。
+2. 从文件名派生出 slug（kebab-case）。
+3. **先将 Python 脚本写入临时文件**（避免 heredoc 引号问题导致的空格和 unicode 问题）：
 
 ```
-Use Write tool to create `raw/.tmp/llm_wiki_map_doc.py` with the script below.
-The project must have a `raw/` directory already (created by `init` or `capture`).
+使用 Write 工具将以下脚本创建为 `raw/.tmp/llm_wiki_map_doc.py`。
+项目必须已有 `raw/` 目录（由 `init` 或 `capture` 创建）。
 ```
 
 ```python
@@ -145,59 +145,59 @@ if dupes:
 json.dump(output, sys.stdout, ensure_ascii=False)
 ```
 
-4. **Run the script with uv, passing the file path as an argument**:
+4. **使用 uv 运行脚本，将文件路径作为参数传递**：
 ```bash
 uv run --with PyPDF2 --with pdfplumber --with python-docx --with python-pptx python raw/.tmp/llm_wiki_map_doc.py "<filepath>"
 ```
 
-5. Parse the JSON output. If extraction failed, report the error and stop.
-6. Generate the source map file at `raw/sources/<slug>.map.md`. Use this template:
+5. 解析 JSON 输出。如果提取失败，报告错误并停止。
+6. 在 `raw/sources/<slug>.map.md` 生成来源地图文件。使用以下模板：
 
 ```
 ---
-title: "<filename without extension, title-cased>"
+title: "<文件名（无扩展名，标题式大写）>"
 type: source_map
 source_type: "<pdf | docx | pptx>"
-file_path: "<absolute path>"
+file_path: "<绝对路径>"
 structure_mode: <explicit_toc | inferred_structure>
-structure_basis: "<bookmarks | headings | slide titles>"
+structure_basis: "<书签 | 标题 | 幻灯片标题>"
 confidence: <high | medium | low>
 coverage_status: mapped
-<page_count: N  (if pdf/pptx)>
+<page_count: N（如为 pdf/pptx）>
 ---
 
-# <title>
+# <标题>
 
-## Overview
-Brief description of this document (infer from filename and first few headings).
+## 概述
+此文档的简要描述（从文件名和开头的几个标题推断）。
 
-## Section Map
-- <Heading 1> — p.XX (or slide XX)
-  - <Heading 2> — p.XX
+## 章节地图
+- <标题1> — 第XX页（或 幻灯片XX）
+  - <标题2> — 第XX页
 
-## High-Value Ranges
-Note which sections are most likely to contain wiki-relevant content
-(e.g. reference sections, API tables, configuration chapters).
+## 高价值范围
+注明哪些章节最可能包含 wiki 相关内容
+（例如参考章节、API 表格、配置章节）。
 
-## Extraction Caveats
-Note any limitations: inferred headings (not from TOC), missing pages,
-scan artifacts, etc.
+## 提取注意事项
+注明任何限制：推断的标题（非来自目录）、缺失页面、
+扫描伪影等。
 
-## How to Use This Map
-Run `ingest --target "<section>"` to extract a specific section into the wiki.
-Run `ingest` without `--target` to start from the highest-priority section.
+## 如何使用此地图
+运行 `ingest --target "<章节>"` 将特定章节提取到 wiki。
+运行 `ingest`（不带 `--target`）从最高优先级章节开始。
 ```
 
-7. Save the map file.
-8. Append a log entry to `log.md`:
-   `## [YYYY-MM-DD] map-document | <filename> — structure mapped (N sections, N pages)`
+7. 保存地图文件。
+8. 在 `log.md` 中追加日志条目：
+   `## [YYYY-MM-DD] map-document | <文件名> — 结构已映射（N 个章节，N 页）`
 
-9. **After reporting the map file path, state the next action:**
-   - Read the source map and identify the highest-priority pending section
-   - "Suggested next: run `ingest` on section `<id>` (chapter X, priority:high)"
+9. **报告地图文件路径后，说明下一步操作：**
+   - 读取来源地图并识别最高优先级的待处理章节
+   - "建议下一步：对章节 `<id>`（第X章，优先级:high）执行 `ingest`"
 
-### Output
+### 输出
 
-Report these paths:
-- Created: `raw/sources/<slug>.map.md`
-- Temp script: `raw/.tmp/llm_wiki_map_doc.py` (session-scoped)
+报告以下路径：
+- 已创建：`raw/sources/<slug>.map.md`
+- 临时脚本：`raw/.tmp/llm_wiki_map_doc.py`（会话范围）

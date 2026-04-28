@@ -1,45 +1,45 @@
 ---
 name: review
-description: Health check and consistency review of the wiki — frontmatter, anchors, contradictions, orphans.
+description: wiki 健康检查和一致性审查 — frontmatter、锚点、矛盾、孤儿页面
 ---
 
-## review
+## review（审查）
 
-Use when the user wants a health check, maintenance pass, or consistency review.
+当用户希望进行健康检查、维护或一致性审查时使用。
 
-Run these checks in order:
+按顺序执行以下检查：
 
-1. **Frontmatter check** — Every wiki page must begin with a YAML frontmatter block:
-   - Missing frontmatter → add it (see ingest Step 4 for schema)
-   - Duplicate title line after frontmatter → remove it
-   - Invalid `type` value → correct to known type
+1. **Frontmatter 检查** — 每个 wiki 页面必须以 YAML frontmatter 块开头：
+   - 缺少 frontmatter → 添加（参见 ingest 步骤 4 的模式）
+   - frontmatter 后有重复标题行 → 删除
+   - 无效的 `type` 值 → 更正为已知类型
 
-2. **Source anchor check** — Every factual claim must have a `→ [Source: ...]` anchor.
-   Missing anchors → add them or mark the claim for human review.
+2. **来源锚点检查** — 每条事实声明必须有 `→ [来源: ...]` 锚点。
+   缺少锚点 → 添加或标记为需要人工审查。
 
-3. **Contradiction check** — Same fact stated differently across pages.
-   Surface differences; do not silently pick one.
+3. **矛盾检查** — 同一事实在不同页面中表述不一致。
+   呈现差异；不静默选择其中一个。
 
-4. **Stale claim check** — Claims that no longer match the current source or code.
-   Flag for refresh or mark as outdated.
+4. **过期声明检查** — 与当前来源或代码不再匹配的声明。
+   标记为需要刷新或标记为过期。
 
-5. **Orphan page check** — Pages not linked from `index.md` or any other page.
-   Add a link or delete the orphan.
+5. **孤儿页面检查** — 未从 `index.md` 或任何其他页面链接的页面。
+   添加链接或删除孤儿页面。
 
-6. **Cross-reference check** — Pages that mention a concept or entity without linking.
-   Add wikilinks (`[[page]]` or relative paths) where missing.
+6. **交叉引用检查** — 提及概念或实体但未链接的页面。
+   在缺失处添加 wikilink（`[[page]]` 或相对路径）。
 
-7. **Duplicate page check** — Multiple pages covering the same topic.
-   Suggest merging; apply only if user approves.
+7. **重复页面检查** — 覆盖同一主题的多个页面。
+   建议合并；仅在用户批准后执行。
 
-8. **index.md drift check** — Entries in `index.md` that no longer exist on disk.
-   Remove stale entries; add missing high-value pages.
+8. **index.md 漂移检查** — `index.md` 中指向磁盘上已不存在文件的条目。
+   删除过时条目；添加缺失的高价值页面。
 
-9. **Source map status check** — Source maps with all sections `status: complete`.
-   Mark `coverage_status: focused_ingest_complete`.
+9. **来源地图状态检查** — 所有章节 `status: complete` 的来源地图。
+   标记 `coverage_status: focused_ingest_complete`。
 
-Report findings with file paths grouped by severity: CRITICAL / WARN / INFO.
-If the user wants fixes, apply the changes and update `log.md`.
+按严重级别分组报告发现：CRITICAL / WARN / INFO。
+如果用户希望修复，应用更改并更新 `log.md`。
 
 ### 输出结构
 

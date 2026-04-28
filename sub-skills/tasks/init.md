@@ -1,17 +1,17 @@
 ---
 name: init
-description: Initialize wiki workspace structure when missing required files and folders.
+description: 在工作空间缺失必需文件和目录时初始化 wiki 工作空间结构
 ---
 
-## init
+## init（初始化）
 
-Use when the workspace does not yet have the required workflow files and folders.
+当工作空间尚未具备所需的工作流文件和目录时使用。
 
-### Steps
+### 步骤
 
-1. Determine the workspace root.
-2. Verify the path is a local workspace suitable for the llm-wiki structure.
-3. Create these paths if missing:
+1. 确定工作空间根目录。
+2. 验证路径是适合 llm-wiki 结构的本地工作空间。
+3. 创建缺失的以下路径：
    - `raw/sources/`
    - `raw/assets/`
    - `wiki/sources/`
@@ -19,12 +19,12 @@ Use when the workspace does not yet have the required workflow files and folders
    - `wiki/entities/`
    - `wiki/analyses/`
    - `wiki/comparisons/`
-4. Create or repair:
+4. 创建或修复：
    - `CLAUDE.md`
    - `index.md`
    - `log.md`
    - `wiki/overview.md`
-5. Report all touched paths.
+5. 报告所有触及的路径。
 
 ### 输出结构
 
