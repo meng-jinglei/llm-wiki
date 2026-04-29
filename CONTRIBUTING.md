@@ -5,8 +5,9 @@
 ## 接受哪些贡献
 
 - 工作流改进（新增、优化现有流程）
+- 工具脚本改进（`parse-claims.py`、`build-graph.py`、`run-datalog.py`）
 - 规则增强（编译检查项、安全约束）
-- 模板优化（页面模板、初始化模板）
+- 模板优化（页面模板、初始化模板、claims 格式规范）
 - 文档修正和翻译
 - 示例工作区完善
 
@@ -25,6 +26,7 @@
 - 用真实的 URL、文件或提问测试
 - 确认输出符合预期格式
 - 确认日志正确写入了 `log.md`
+- 如涉及 Python 工具脚本，运行 `uv run python sub-skills/tools/<script>.py --help` 确认可用
 
 ## 设计原则
 
