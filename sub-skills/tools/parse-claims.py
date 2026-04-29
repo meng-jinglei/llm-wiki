@@ -15,6 +15,7 @@ Claims 代码块解析器。
 """
 
 import sys, os, re, json, glob
+from collections import defaultdict
 
 SOURCE_ANCHOR_RE = re.compile(r'→\s*\[(?:来源|Source):\s*([^\]]+)\]')
 OLD_CLAIM_RE = re.compile(r'^-\s+(.+?)\s*→\s*\[(?:来源|Source):\s*([^\]]+)\]')
@@ -163,7 +164,7 @@ def detect_conflicts(claims_by_page: list[dict]) -> list[dict]:
     矛盾检测：跨页面收集所有声明，按谓词+主体分组，
     检测同一谓词+主体的不同值（来自不同页面、不同来源）。
     """
-    from collections import defaultdict
+    from collections import defaultdict  # noqa: E402 (used in main --vocab)
 
     # 按 (predicate, subject) 分组
     groups = defaultdict(list)
@@ -287,6 +288,38 @@ def diff_claims(old_dir: str, new_dir: str) -> dict:
     return diff
 
 
+# 内置推荐谓词列表（与 templates/claims-vocab.md 同步）
+KNOWN_PREDICATES = {
+    "clock_source", "clock_freq", "clock_divider", "clock_dependent",
+    "register", "register_bit", "register_field", "register_value",
+    "counter_bits", "overflow_time", "channel",
+    "pwm_freq", "pwm_duty",
+    "option_byte",
+    "uses_external_wdt", "wdt_feed_interval",
+    "oscillator", "supplies_clock_to",
+    "claim",  # 旧列表格式的默认谓词
+}
+
+def check_vocabulary(dirpath: str) -> list[dict]:
+    """检查 wiki 中使用的谓词是否在已知词汇表中。"""
+    results = scan_directory(dirpath)
+    unknown = []
+    for r in results:
+        if r.get("error"):
+            continue
+        for c in r.get("claims", []):
+            if c.get("type") != "claim":
+                continue
+            pred = c.get("predicate", "")
+            if pred and pred not in KNOWN_PREDICATES:
+                unknown.append({
+                    "file": r["file"],
+                    "predicate": pred,
+                    "raw": c.get("raw", "")
+                })
+    return unknown
+
+
 def main():
     if len(sys.argv) < 2:
         print("用法: python parse-claims.py <file-or-dir> [--format json|table] [--source <source-path>] [--diff <other-dir>]")
@@ -297,6 +330,20 @@ def main():
     if "--format" in sys.argv:
         idx = sys.argv.index("--format")
         fmt = sys.argv[idx + 1] if idx + 1 < len(sys.argv) else "json"
+
+    # --vocab: check predicate vocabulary consistency
+    if "--vocab" in sys.argv:
+        unknown = check_vocabulary(target)
+        if unknown:
+            print(f"未注册谓词: {len(unknown)} 处")
+            by_pred = defaultdict(list)
+            for u in unknown:
+                by_pred[u["predicate"]].append(u["file"])
+            for pred, files in sorted(by_pred.items()):
+                print(f"  {pred} @ {', '.join(files[:3])}")
+        else:
+            print("所有谓词均在词汇表中。")
+        return
 
     # --source: find pages affected by a source change
     if "--source" in sys.argv:
