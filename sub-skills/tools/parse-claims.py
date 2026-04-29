@@ -308,58 +308,114 @@ def load_vocab(vocab_path: str) -> set[str]:
 
 
 def generate_vocab(dirpath: str, output_path: str) -> dict:
-    """从 wiki 页面自动提取所有谓词，生成项目专属词汇表文件。"""
+    """从 wiki 页面自动提取谓词和实体名，生成项目专属词汇表文件。"""
     results = scan_directory(dirpath)
     predicates = {}
+    entities = {}  # 实体名 → 出现文件
+
     for r in results:
         if r.get("error"):
             continue
         for c in r.get("claims", []):
             if c.get("type") != "claim":
                 continue
+            # 谓词
             pred = c.get("predicate", "")
-            if not pred:
-                continue
-            if pred not in predicates:
-                predicates[pred] = {"count": 0, "files": [], "example": c.get("raw", "")}
-            predicates[pred]["count"] += 1
-            predicates[pred]["files"].append(r["file"])
+            if pred:
+                if pred not in predicates:
+                    predicates[pred] = {"count": 0, "files": []}
+                predicates[pred]["count"] += 1
+                if r["file"] not in predicates[pred]["files"]:
+                    predicates[pred]["files"].append(r["file"])
 
-    content = ["# 项目谓词词汇表 — 自动生成于 " + output_path]
-    content.append("# compile 阶段会检查新声明是否使用表中谓词")
+            # 实体名（仅从语义上是实体引用的参数中提取）
+            ENTITY_PARAM_KEYS = {"periph", "source", "name", "reg", "chip", "project", "consumer"}
+            params = c.get("params", {})
+            for k, v in params.items():
+                if k not in ENTITY_PARAM_KEYS:
+                    continue  # bits/hz/ms/addr/value 等是字面量，不是实体引用
+                if not v or not isinstance(v, str):
+                    continue
+                if v.isdigit() or v.startswith("0x"):
+                    continue
+                if v not in entities:
+                    entities[v] = {"count": 0, "files": []}
+                entities[v]["count"] += 1
+                if r["file"] not in entities[v]["files"]:
+                    entities[v]["files"].append(r["file"])
+
+    content = ["# 项目词汇表 — 自动生成"]
+    content.append("# compile 阶段检查声明是否使用表中谓词和实体名")
     content.append("")
+
+    content.append("## 谓词 (Predicates)")
     for pred in sorted(predicates.keys()):
         info = predicates[pred]
         content.append(f"{pred}  # {info['count']} uses")
     content.append("")
 
+    content.append("## 实体名 (Entities)")
+    for ent in sorted(entities.keys()):
+        info = entities[ent]
+        content.append(f"{ent}  # {info['count']} uses")
+    content.append("")
+
     with open(output_path, "w", encoding="utf-8") as f:
         f.write("\n".join(content))
 
-    return {"predicates": len(predicates), "output": output_path, "details": predicates}
+    return {
+        "predicates": len(predicates),
+        "entities": len(entities),
+        "output": output_path
+    }
 
 
-def check_vocabulary(dirpath: str, vocab_path: str) -> list[dict]:
-    """检查 wiki 中使用的谓词是否在项目词汇表中。"""
+def check_vocabulary(dirpath: str, vocab_path: str) -> dict:
+    """检查 wiki 中使用的谓词和实体名是否在项目词汇表中。"""
     known = load_vocab(vocab_path)
     if not known:
-        return []  # 尚无词汇表，跳过检查
+        return {"unknown_preds": [], "unknown_entities": [], "status": "no_vocab"}
     results = scan_directory(dirpath)
-    unknown = []
+    unknown_preds = []
+    unknown_entities = []
+
     for r in results:
         if r.get("error"):
             continue
         for c in r.get("claims", []):
             if c.get("type") != "claim":
                 continue
+            # 检查谓词
             pred = c.get("predicate", "")
             if pred and pred not in known:
-                unknown.append({
+                unknown_preds.append({
                     "file": r["file"],
                     "predicate": pred,
                     "raw": c.get("raw", "")
                 })
-    return unknown
+            # 检查实体名
+            ENTITY_PARAM_KEYS = {"periph", "source", "name", "reg", "chip", "project", "consumer"}
+            params = c.get("params", {})
+            for k, v in params.items():
+                if k not in ENTITY_PARAM_KEYS:
+                    continue
+                if not v or not isinstance(v, str):
+                    continue
+                if v.isdigit() or v.startswith("0x"):
+                    continue
+                if v not in known:
+                    unknown_entities.append({
+                        "file": r["file"],
+                        "entity": v,
+                        "in_param": k,
+                        "predicate": pred
+                    })
+
+    return {
+        "unknown_preds": unknown_preds,
+        "unknown_entities": unknown_entities,
+        "status": "ok" if not unknown_preds and not unknown_entities else "warn"
+    }
 
 
 def main():
@@ -378,26 +434,35 @@ def main():
         idx = sys.argv.index("--gen-vocab")
         out = sys.argv[idx + 1] if idx + 1 < len(sys.argv) else "wiki/_compiled/vocab.txt"
         result = generate_vocab(target, out)
-        print(f"生成词汇表: {result['predicates']} 个谓词 → {result['output']}")
+        print(f"生成词汇表: {result['predicates']} 个谓词 + {result['entities']} 个实体名 → {result['output']}")
         return
 
-    # --vocab: check predicate vocabulary consistency
+    # --vocab: check predicate + entity vocabulary consistency
     if "--vocab" in sys.argv:
         idx = sys.argv.index("--vocab")
         vocab_file = sys.argv[idx + 1] if idx + 1 < len(sys.argv) else "wiki/_compiled/vocab.txt"
-        unknown = check_vocabulary(target, vocab_file)
-        if not unknown:
-            print("所有谓词均在词汇表中。")
+        result = check_vocabulary(target, vocab_file)
+        if result["status"] == "no_vocab":
+            print("词汇表尚未生成。运行 --gen-vocab 自动生成。")
+        elif result["status"] == "ok":
+            print("所有谓词和实体名均在词汇表中。")
         else:
-            if unknown == [] and not os.path.exists(vocab_file):
-                print("词汇表尚未生成。运行 --gen-vocab 自动生成，或手动创建 wiki/_compiled/vocab.txt。")
-            else:
-                print(f"未注册谓词: {len(unknown)} 处")
+            up = result["unknown_preds"]
+            ue = result["unknown_entities"]
+            if up:
+                print(f"未注册谓词: {len(up)} 处")
                 by_pred = defaultdict(list)
-                for u in unknown:
+                for u in up:
                     by_pred[u["predicate"]].append(u["file"])
                 for pred, files in sorted(by_pred.items()):
                     print(f"  {pred} @ {', '.join(files[:3])}")
+            if ue:
+                print(f"未注册实体名: {len(ue)} 处")
+                by_ent = defaultdict(list)
+                for u in ue:
+                    by_ent[u["entity"]].append(u["file"])
+                for ent, files in sorted(by_ent.items())[:10]:
+                    print(f"  {ent} @ {', '.join(files[:3])}")
         return
 
     # --source: find pages affected by a source change
