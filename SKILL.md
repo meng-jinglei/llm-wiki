@@ -102,15 +102,28 @@ Obsidian 是可选的界面，而非先决条件。
 
 | 工具 | 用途 | 安装 |
 |------|------|------|
-| `uv` | Python 依赖隔离 | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| `tree-sitter-languages` | C/C++ AST 解析（代码符号索引） | `uv run --with tree-sitter-languages` |
-| `pdfplumber` | PDF 结构提取 | `uv run --with pdfplumber` |
-| `PyPDF2` | PDF 解析备用 | `uv run --with PyPDF2` |
-| `parse-claims.py` | Claims 声明解析 + 矛盾检测 | `uv run python sub-skills/tools/parse-claims.py` |
+| `uv` | Python 依赖隔离与动态库安装 | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+
+**动态工具发现原则：** 不在 SKILL.md 中硬编码特定 Python 库列表。
+Claude Code 根据实际要处理的文件类型，自行判断需要哪些 Python 库，
+通过 `uv run --with <library>` 动态安装。`uv` 的 `--with` 机制使得无需预装即可使用任意 PyPI 包。
+
+常见场景参考（非强制列表，Claude Code 自行判断实际需要的库）：
+
+| 文件类型 | 可能需要 |
+|---------|---------|
+| PDF（有目录） | `PyPDF2` |
+| PDF（无目录/扫描件） | `pdfplumber`（或 `PyPDF2` 备用） |
+| DOCX | `python-docx` |
+| PPTX | `python-pptx` |
+| C/C++ 源码 | `tree-sitter-languages` |
+| 其他语言源码 | 对应的 tree-sitter 语言包（如 `tree-sitter-python`、`tree-sitter-rust` 等） |
+
+项目自带工具脚本（`sub-skills/tools/*.py`）使用 Python 标准库，无额外依赖，
+通过 `uv run python sub-skills/tools/<script>.py` 运行。
 
 ### Windows 注意事项
 
-- `/tmp/` 可能不可写，请使用项目内路径 `raw/.tmp/` 存放临时脚本
 - 始终将文件路径作为命令行参数传递，避免 heredoc 中的 unicode 路径问题
 
 <core_model>
@@ -123,21 +136,22 @@ wiki 是主要的回答层面。原始来源是可追溯的输入，而非默认
 </core_model>
 
 <tool_assumptions>
-技能将繁重的工作（PDF 解析、代码索引）委托给外部工具。
-所有工具依赖在此声明，并附有后备方案。
+繁重的工作（PDF 解析、代码索引）委托给外部工具。
+`uv` 是唯一的必需依赖，其他 Python 库按需动态安装。
 
 | 工具 | 用途 | 必需 | 后备 |
 |------|---------|----------|---------|
-| `uv` | Python 依赖隔离 | 是 | 无 — 必须安装 |
-| `tree-sitter-languages` | C/C++ AST 解析（符号索引） | 通过 --with | （无 — 主要工具） |
-| `pdfplumber` | PDF 结构提取 | 通过 --with | PyPDF2 通过 --with |
+| `uv` | Python 依赖隔离与动态库安装 | 是 | 无 — 必须安装 |
 
 **安装 `uv`：** `curl -LsSf https://astral.sh/uv/install.sh | sh`
 （Git Bash / Linux / macOS — 三个平台命令相同）
 
+**动态工具发现：** Claude Code 根据要处理的文件类型自行判断需要哪些 Python 库，
+通过 `uv run --with <library>` 即时安装使用，无需预装。
+每个工作流定义中可给出该场景常用的库建议，但不作为硬性依赖。
+
 **平台说明：**
-- 在 Windows 上（Git Bash / MSYS）：`/tmp/` 可能不可写 — 将输出写入项目内部路径（`raw/sources/`）
-- 始终将文件路径作为命令行参数传递，切勿通过 stdin 或 heredoc — 避免空格和 unicode 字符的引号问题
+- 在 Windows 上（Git Bash / MSYS），始终将文件路径作为命令行参数传递，切勿通过 stdin 或 heredoc — 避免空格和 unicode 字符的引号问题
 </tool_assumptions>
 
 <path_rule>
@@ -153,7 +167,7 @@ wiki 是主要的回答层面。原始来源是可追溯的输入，而非默认
 - 当 Edit 的 old_string 包含非 ASCII 字符（中文、日文等）时，Edit 工具可能静默失败。
   解决方法：使用 `uv run python` 执行替换，或将编辑拆分为避免在 old_string 中使用非 ASCII 字符串的较小片段。
 - 始终将文件路径作为命令行参数传递给 Python 脚本，切勿通过 heredoc 或 stdin — 避免 unicode 文件名的引号问题。
-- 在 Windows 上将 Python 脚本文件写入 `raw/.tmp/`（项目内部），而非 `/tmp/`。
+- 临时文件位置遵循全局规则：所有临时文件写入 `raw/.tmp/`。
 </path_rule>
 
 <global_rules>
@@ -175,6 +189,10 @@ wiki 是主要的回答层面。原始来源是可追溯的输入，而非默认
 - 如果请求可能匹配多个工作流，选择保留用户意图的最窄工作流。
 - 如果工作流写入文件，始终报告按创建、更新或未变化分组的触及路径。
 - 如果查询结果值得保存，在保存回工作空间之前先询问。
+- **临时文件必须写入 `raw/.tmp/`。** 所有工作流产生的临时脚本、
+  中间 JSON 数据、缓存文件等，一律放入项目内的 `raw/.tmp/` 目录。
+  禁止写入 `/tmp/`（Windows 不可靠）、项目根目录、或其他系统临时目录。
+  `raw/.tmp/` 内容为会话级别，不保证持久化，不计入 wiki 知识。
 - 写入 wiki 的每条事实声明都必须包含来源锚点。
   格式：`→ [来源: raw/sources/filename.md]` 或 `→ [来源: filename.md:第XX页]`。
   示例：`→ [来源: RA4M2_manual.pdf, 第134页]`。任何声明都不能
@@ -475,7 +493,7 @@ log.md                        ← code-anchor 记录
 ## map-document（文档映射）
 当用户提供大型文档（PDF、DOCX、PPTX）并希望在导入前创建可导航的结构地图时使用。
 
-完整工作流见 `sub-skills/tools/map-document.md`，包含通过 `uv run --with PyPDF2 --with pdfplumber --with python-docx --with python-pptx` 提取大纲结构的 Python 脚本。
+完整工作流见 `sub-skills/tools/map-document.md`。Claude Code 根据文档格式自行选择 Python 库，通过 `uv run --with <library>` 动态安装。
 
 步骤：
 1. 确认文件存在且为 `.pdf`、`.docx` 或 `.pptx` 格式。
@@ -494,7 +512,7 @@ raw/.tmp/llm_wiki_map_doc.py  ← 临时脚本（会话内）
 ## index-codebase（代码库索引）
 当用户提供源代码目录并希望建立符号索引时使用。
 
-完整工作流见 `sub-skills/tools/index-codebase.md`，使用 tree-sitter-languages 通过 `uv run --with tree-sitter-languages` 进行 C/C++ AST 解析。
+完整工作流见 `sub-skills/tools/index-codebase.md`。使用 tree-sitter 进行 AST 解析，Claude Code 根据源码语言选择对应的 tree-sitter 包。
 
 步骤：
 1. 确认目录存在。

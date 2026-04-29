@@ -15,14 +15,9 @@ allowed-tools: [Bash, Read, Write]
 | 工具 | 必需 | 安装 |
 |------|----------|---------|
 | `uv` | 是 | `curl -LsSf https://astral.sh/uv/install.sh \| sh`（Git Bash / Linux / macOS） |
-| `pdfplumber` | 通过 --with | `uv run --with pdfplumber` |
-| `PyPDF2` | 通过 --with | `uv run --with PyPDF2` |
-| `python-docx` | 通过 --with | `uv run --with python-docx` |
-| `python-pptx` | 通过 --with | `uv run --with python-pptx` |
 
-**Windows（Git Bash/MSYS）说明：**
-- 所有临时文件（脚本文件、中间数据）使用 `raw/.tmp/` — 切勿依赖 `/tmp/`
-- 始终将文件路径作为命令行参数传递，不通过 stdin/heredoc — 避免空格和 unicode 字符的引号问题
+Claude Code 根据文档格式自行选择需要的 Python 库，通过 `uv run --with <library>` 动态安装。
+常用库参考：PDF 用 `PyPDF2`（有目录）或 `pdfplumber`（无目录/扫描件），DOCX 用 `python-docx`，PPTX 用 `python-pptx`。
 
 ### 何时使用
 

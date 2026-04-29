@@ -1,6 +1,6 @@
 ---
 name: index-codebase
-description: 使用 ctags 或 tree-sitter 后备方案为源代码目录生成符号索引
+description: 使用 tree-sitter 为源代码目录生成符号索引
 argument-hint: "<directory>"
 allowed-tools: [Bash, Read, Write]
 ---
@@ -14,12 +14,9 @@ allowed-tools: [Bash, Read, Write]
 | 工具 | 必需 | 安装 |
 |------|----------|---------|
 | `uv` | 是 | `curl -LsSf https://astral.sh/uv/install.sh \| sh`（Git Bash / Linux / macOS） |
-| `ctags` | 否（首选） | macOS：`brew install universal-ctags`；Linux：`apt install universal-ctags`；Windows：`scoop install ctags` 或从 github.com/universal-ctags/ctags-win32 下载 |
-| `tree-sitter-languages` | 否（用于方案 B） | `uv run --with tree-sitter-languages` |
+| tree-sitter 语言包 | 按需 | `uv run --with tree-sitter-languages`（C/C++），其他语言使用对应的 tree-sitter 包 |
 
-**Windows（Git Bash/MSYS）说明：**
-- 所有临时文件（脚本文件、中间数据）使用 `raw/.tmp/` — 切勿依赖 `/tmp/`
-- 如果 `ctags` 不可用，方案 B（tree-sitter）无需上述包之外的外部依赖即可工作
+Claude Code 根据源码文件后缀自行判断需要哪个 tree-sitter 语言包，通过 `uv run --with <package>` 动态安装。
 
 ### 何时使用
 
@@ -31,72 +28,19 @@ allowed-tools: [Bash, Read, Write]
 
 1. 确认目录存在且包含源文件。
 2. 从目录名派生出 slug（kebab-case）。
-3. 检查 `ctags`：
-   - 运行 `ctags --version`
-   - 如果找到 → 使用下面的**方案 A**
-   - 如果未找到 → 使用下面的**方案 B**
+3. 分析目录中的文件扩展名，确定主要语言。
+4. 根据语言选择对应的 tree-sitter 包：
 
----
+| 语言 | tree-sitter 包 |
+|------|---------------|
+| C / C++ | `tree-sitter-languages` |
+| Python | `tree-sitter-python`（或 `tree-sitter-languages`） |
+| Rust | `tree-sitter-rust` |
+| JavaScript / TypeScript | `tree-sitter-javascript` / `tree-sitter-typescript` |
+| Go | `tree-sitter-go` |
+| 其他 | 搜索对应的 `tree-sitter-<lang>` 包 |
 
-### 方案 A：ctags（首选）
-
-运行 ctags 生成 tags 文件。将输出写入项目目录（而非 `/tmp/`）：
-
-```bash
-ctags -R --fields=+nKz --extras=+q --output-format=json -f "raw/sources/<slug>.tags.json" "<directory>"
-```
-
-解析 JSON tags 文件：
-
-```bash
-python - << 'PYEOF'
-import sys, json
-from pathlib import Path
-
-tags_file = Path('raw/sources/<slug>.tags.json')
-if not tags_file.exists():
-    sys.stderr.write('ctags output not found\n')
-    sys.exit(1)
-
-symbols = []
-with open(tags_file, encoding='utf-8') as f:
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            entry = json.loads(line)
-            symbols.append({
-                'name': entry.get('name', ''),
-                'kind': entry.get('kind', '?'),
-                'path': entry.get('path', ''),
-                'line': entry.get('line', 0),
-                'language': entry.get('language', '')
-            })
-        except json.JSONDecodeError:
-            continue
-
-by_kind = {}
-for s in symbols:
-    by_kind.setdefault(s['kind'], []).append(s)
-
-summary = {kind: items[:30] for kind, items in by_kind.items()}
-langs = sorted(set(s['language'] for s in symbols if s['language']))
-
-output = {'total': len(symbols), 'languages': langs, 'kinds': list(by_kind.keys()), 'summary': summary}
-json.dump(output, sys.stdout)
-PYEOF
-```
-
----
-
-### 方案 B：tree-sitter（需要 tree-sitter 和 tree-sitter-c）
-
-**步骤 B1：** 先将 Python 脚本写入临时文件（避免 heredoc 引号问题）：
-
-```
-使用 Write 工具将以下脚本创建为 `raw/.tmp/llm_wiki_index_code.py`。
-```
+5. 将索引脚本写入 `raw/.tmp/llm_wiki_index_code.py`（临时文件规则见 SKILL.md 全局规则）。
 
 ```python
 # llm_wiki_index_code.py — tree-sitter based C/C++ symbol indexer
@@ -211,16 +155,14 @@ OUTPUT.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='ut
 print(f"Done: {result['total']} symbols indexed")
 ```
 
-**步骤 B2：** 使用 uv 运行，将目录和输出路径作为参数传递：
+6. 使用 uv 运行，将目录和输出路径作为参数传递：
 
 ```bash
 uv run --with tree-sitter-languages python raw/.tmp/llm_wiki_index_code.py "<directory>" "raw/sources/<slug>.codebase.json"
 ```
 
----
-
-4. 解析方案 A 或 B 的 JSON 输出。包含 `total`、`counts`、`kinds` 和 `summary`（每类前 30-50 个符号）。
-5. 在 `raw/sources/<slug>.codebase.md` 写入代码库地图：
+7. 解析 JSON 输出。包含 `total`、`counts`、`kinds` 和 `summary`（每类前 50 个符号）。
+8. 在 `raw/sources/<slug>.codebase.md` 写入代码库地图：
 
 ```
 ---
@@ -229,7 +171,7 @@ type: codebase_map
 root_path: "<绝对路径>"
 file_count: <从目录扫描估算>
 primary_languages: [<语言1>, <语言2>]
-index_tool: <universal-ctags | tree-sitter>
+index_tool: tree-sitter
 coverage_status: indexed
 ---
 
@@ -277,12 +219,12 @@ coverage_status: indexed
 - 完整符号数据：`raw/sources/<slug>.codebase.json`
 ```
 
-6. 保存地图文件。
-7. 在 `log.md` 中追加日志条目：
+9. 保存地图文件。
+10. 在 `log.md` 中追加日志条目：
    `## [YYYY-MM-DD] index-codebase | <dirname> — N 个符号已索引（N 个函数，N 个结构体，N 个枚举，N 个宏）`
    注意：`typedefs` 在日志摘要中计入 `structs`。
 
-8. **报告地图文件路径后，说明下一步操作：**
+11. **报告地图文件路径后，说明下一步操作：**
    - "建议下一步：运行 `code-anchor` 将关键函数绑定到其 wiki 页面，然后对来源地图中最高优先级章节执行 `ingest`"
 
 ### 输出
@@ -290,4 +232,4 @@ coverage_status: indexed
 报告以下路径：
 - 已创建：`raw/sources/<slug>.codebase.md`
 - 原始数据：`raw/sources/<slug>.codebase.json`
-- 临时脚本：`raw/.tmp/llm_wiki_index_code.py`（会话范围，仅方案 B）
+- 临时脚本：`raw/.tmp/llm_wiki_index_code.py`（会话范围）

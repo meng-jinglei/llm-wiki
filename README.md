@@ -90,14 +90,9 @@ git clone https://github.com/meng-jinglei/llm-wiki.git ~/.claude/skills/llm-wiki
 | 工具 | 用途 | 安装 |
 |------|------|------|
 | Claude Code | 运行环境 | — |
-| `uv` | Python 依赖隔离 | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| `tree-sitter-languages` | C/C++ AST 解析（index-codebase） | `uv run --with tree-sitter-languages` |
-| `pdfplumber` | PDF 结构提取（map-document） | `uv run --with pdfplumber` |
-| `PyPDF2` | PDF 解析备用 | `uv run --with PyPDF2` |
-| `python-docx` | DOCX 解析（map-document） | `uv run --with python-docx` |
-| `python-pptx` | PPTX 解析（map-document） | `uv run --with python-pptx` |
+| `uv` | Python 依赖隔离与动态库安装 | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
 
-`parse-claims.py`、`build-graph.py`、`run-datalog.py` 使用 Python 标准库，无额外依赖。
+**`uv` 是唯一的必需依赖。** Claude Code 根据实际要处理的文件类型自行判断需要哪些 Python 库，通过 `uv run --with <library>` 动态安装——无需预装任何特定库。项目自带的工具脚本（`parse-claims.py`、`build-graph.py`、`run-datalog.py`）使用 Python 标准库，无额外依赖。
 
 ## Obsidian 集成（可选）
 
