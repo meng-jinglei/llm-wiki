@@ -72,13 +72,29 @@ SKILL.md 是入口和规则汇总。具体工作流定义在 `sub-skills/tasks/`
 
 ## 编译阶段
 
-编译是 `compile` 工作流执行的只读验证过程：
+编译是 `compile` 工作流执行的只读验证过程。v1.3+ 支持基于 claims 解析器的机械验证。
 
-| 阶段 | 检查目标 | 严重度 |
-|------|---------|--------|
-| 来源覆盖 | 来源地图进度、高优先级章节是否遗漏 | WARN/INFO |
-| 声明完整性 | 每条声明是否有可解析的来源锚点 | CRITICAL/WARN |
-| 矛盾检测 | 不同页面同一话题是否有冲突声明 | WARN/INFO |
+| 阶段 | 检查目标 | 工具 | 严重度 |
+|------|---------|------|--------|
+| 来源覆盖 | 来源地图进度、高优先级章节是否遗漏 | 手动扫描 | WARN/INFO |
+| 声明完整性 | 每条声明是否有可解析的来源锚点 | `parse-claims.py` | CRITICAL/WARN |
+| 矛盾检测 | 按 (谓词, 主体) 分组检测冲突声明值 | `parse-claims.py` | WARN/INFO |
+
+### Claims 解析流程
+
+```
+wiki/*.md → parse-claims.py → 结构化三元组 (JSON)
+  │                              │
+  ├── 新格式: ```claims 代码块    ├── predicate: clock_source
+  │   clock_source(periph:WDT,    ├── subject: WDT
+  │     source:PCLKB) %% → [...]  ├── params: {periph:WDT, source:PCLKB}
+  │                              └── source: manual, p.134
+  └── 旧格式: ## 关键声明
+      - 时钟源: PCLKB → [...]
+
+格式规范: templates/claims-format-spec.md
+解析器: sub-skills/tools/parse-claims.py
+```
 
 编译产物：`wiki/_compiled/report-YYYY-MM-DD.md`
 

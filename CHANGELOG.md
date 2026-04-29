@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+## [1.3] — 2026-04-29
+
+### Added
+- **research 工作流** — 自动研究：多渠道搜索、中英文双语、质量筛选、agent-browser 自动下载、缺口检测与迭代
+  - Anna's Archive 集成：动态域名查找（shadowlibraries.github.io）+ agent-browser 搜索与下载
+  - 安全下载渠道：arXiv、作者主页、GitHub Releases、机构仓库
+- **query 强化（Phase 3 完成）**：
+  - 意图路由：自动判断事实/关系/对比/因果/探索五类意图
+  - 渐进式加载：R1(index)→R2(frontmatter)→R3(声明)→R4(全文)，上下文预算控制
+  - query→compile 反馈闭环：新发现矛盾自动写回编译报告
+  - 声明质量感知：区分 derived/direct、auto_screened/human_curated
+- **nashsu/llm_wiki wiki 化分析**：对 nashsu 项目完成 project-init + capture + ingest，产出 8 个 wiki 页面 + 对比分析
+
+### Changed
+- **ROADMAP Phase 3 标记为完成** — query 从"搜索"进化为"推理"
+- **思考语言** — CLAUDE.md 声明 thinking 阶段使用中文
+- **中英文双语搜索强制** — research 工作流要求每个主题用中英文各搜一次
+- **query 输出更新** — 新增写回 compile 报告的路径
+
+## [1.1] — 2026-04-27
+
 ### Changed
 - **全中文化** — SKILL.md 和 sub-skills/ 下 10 个文件全部翻译为中文
 - **语言声明** — CLAUDE.md 首行声明"语言：中文"

@@ -50,7 +50,10 @@ Obsidian 是可选的界面，而非先决条件。
 | "初始化这个项目的wiki" / "帮我建wiki结构" | `project-init` | 扫描项目，搭建 raw/wiki 骨架 |
 | "把这个PDF建档" / "捕获这个URL" | `capture` | 保存到 raw 层，记录元数据 |
 | "建档第5章" / "把这份文档消化进wiki" | `ingest` | 提取知识，更新 wiki 页面 |
-| "问个问题" / "wiki里怎么说的" | `query` | 从 wiki 回答，声明来源 |
+| "问个问题" / "wiki里怎么说的" | `query` | 意图路由、渐进式加载、声明交叉验证、反馈闭环 |
+| "帮我研究一个主题" / "我想学习XX" | `research` | 自动搜索、筛选、下载、导入 |
+| "来源更新了" / "检查同步状态" | `sync` | 增量同步、受影响页面定位、过时标记 |
+
 | "检查wiki一致性" / "review一下" | `review` | 9项健康检查，CRITICAL/WARN/INFO |
 | "编译验证" / "编译wiki" | `compile` | 三阶段编译检查 — 来源覆盖、声明完整性、矛盾检测 |
 | "合并这两个页面" / "整理一下这个目录" | `curate` | 重组结构，保留关联 |
@@ -103,6 +106,7 @@ Obsidian 是可选的界面，而非先决条件。
 | `tree-sitter-languages` | C/C++ AST 解析（代码符号索引） | `uv run --with tree-sitter-languages` |
 | `pdfplumber` | PDF 结构提取 | `uv run --with pdfplumber` |
 | `PyPDF2` | PDF 解析备用 | `uv run --with PyPDF2` |
+| `parse-claims.py` | Claims 声明解析 + 矛盾检测 | `uv run python sub-skills/tools/parse-claims.py` |
 
 ### Windows 注意事项
 
@@ -332,7 +336,8 @@ log.md                         ← ingest 记录
 ```
 
 ## query（查询）
-当用户询问关于 wiki 的问题时使用。
+当用户询问关于 wiki 的问题时使用。支持意图路由（事实/关系/对比/因果/探索）、
+渐进式多轮加载、声明交叉验证、编译报告感知、query→compile 反馈闭环、多轮追问。
 
 完整工作流见 `sub-skills/tasks/query.md`。
 
@@ -342,6 +347,42 @@ log.md                         ← ingest 记录
 ```
 wiki/analyses/<slug>.md     ← 保存的分析结果
 wiki/comparisons/<slug>.md   ← 保存的对比结果
+```
+如有新矛盾反馈：
+```
+wiki/_compiled/report-YYYY-MM-DD.md  ← 追加 "## Query 发现" 区块
+```
+
+## research（自动研究）
+当用户希望学习某个主题但没有现成资料时使用。自动多渠道搜索、
+质量筛选、下载资源、构建 wiki 知识。支持中英文双语搜索。
+
+完整工作流见 `sub-skills/tasks/research.md`。
+
+### 输出结构
+
+```
+raw/sources/<slug>.research-plan.md    ← 研究策略
+raw/sources/<slug>.candidates.md       ← 候选来源列表
+raw/assets/<file>                       ← 自动下载的资源
+wiki/<type>/<page>.md                  ← 生成的知识页面
+wiki/analyses/<slug>-gaps.md           ← 知识缺口报告
+wiki/analyses/<slug>-report.md         ← 最终研究报告
+log.md                                  ← 操作日志
+```
+
+## sync（增量同步）
+当来源文件更新后，检测 wiki 同步状态。定位受影响页面，标记过时声明。
+
+完整工作流见 `sub-skills/tasks/sync.md`。
+
+### 输出结构
+
+```
+<受影响页面>.md             ← frontmatter 更新 (status/needs_refresh)
+raw/sources/<slug>.md       ← last_checked 更新
+wiki/_compiled/report-*.md  ← 追加同步报告区块
+log.md                       ← sync 记录
 ```
 
 ## review（审查）
@@ -472,7 +513,7 @@ raw/.tmp/llm_wiki_index_code.py  ← 临时脚本（会话内，方案 B）
 </workflows>
 
 <process>
-1. 判断请求是 init、capture、ingest、query、review、compile、curate、project-init、code-anchor、map-document 还是 index-codebase。
+1. 判断请求是 init、capture、ingest、query、research、review、compile、curate、sync、graph、project-init、code-anchor、map-document 还是 index-codebase。
 2. 在操作文件前确认工作空间根目录。
 3. 优先编辑现有页面而非创建重复页面。
 4. 捕获后保持原始来源不可变。
