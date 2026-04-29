@@ -288,20 +288,62 @@ def diff_claims(old_dir: str, new_dir: str) -> dict:
     return diff
 
 
-# 内置推荐谓词列表（与 templates/claims-vocab.md 同步）
-KNOWN_PREDICATES = {
-    "clock_source", "clock_freq", "clock_divider", "clock_dependent",
-    "register", "register_bit", "register_field", "register_value",
-    "counter_bits", "overflow_time", "channel",
-    "pwm_freq", "pwm_duty",
-    "option_byte",
-    "uses_external_wdt", "wdt_feed_interval",
-    "oscillator", "supplies_clock_to",
-    "claim",  # 旧列表格式的默认谓词
-}
+def load_vocab(vocab_path: str) -> set[str]:
+    """从项目词汇表文件加载已知谓词集合。词汇表每行一个谓词名。"""
+    if not os.path.exists(vocab_path):
+        return set()
+    predicates = set()
+    with open(vocab_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            # 去掉行尾注释（# 之后的内容）
+            if "  #" in line:
+                line = line.split("  #")[0].strip()
+            elif "\t#" in line:
+                line = line.split("\t#")[0].strip()
+            predicates.add(line)
+    return predicates
 
-def check_vocabulary(dirpath: str) -> list[dict]:
-    """检查 wiki 中使用的谓词是否在已知词汇表中。"""
+
+def generate_vocab(dirpath: str, output_path: str) -> dict:
+    """从 wiki 页面自动提取所有谓词，生成项目专属词汇表文件。"""
+    results = scan_directory(dirpath)
+    predicates = {}
+    for r in results:
+        if r.get("error"):
+            continue
+        for c in r.get("claims", []):
+            if c.get("type") != "claim":
+                continue
+            pred = c.get("predicate", "")
+            if not pred:
+                continue
+            if pred not in predicates:
+                predicates[pred] = {"count": 0, "files": [], "example": c.get("raw", "")}
+            predicates[pred]["count"] += 1
+            predicates[pred]["files"].append(r["file"])
+
+    content = ["# 项目谓词词汇表 — 自动生成于 " + output_path]
+    content.append("# compile 阶段会检查新声明是否使用表中谓词")
+    content.append("")
+    for pred in sorted(predicates.keys()):
+        info = predicates[pred]
+        content.append(f"{pred}  # {info['count']} uses")
+    content.append("")
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(content))
+
+    return {"predicates": len(predicates), "output": output_path, "details": predicates}
+
+
+def check_vocabulary(dirpath: str, vocab_path: str) -> list[dict]:
+    """检查 wiki 中使用的谓词是否在项目词汇表中。"""
+    known = load_vocab(vocab_path)
+    if not known:
+        return []  # 尚无词汇表，跳过检查
     results = scan_directory(dirpath)
     unknown = []
     for r in results:
@@ -311,7 +353,7 @@ def check_vocabulary(dirpath: str) -> list[dict]:
             if c.get("type") != "claim":
                 continue
             pred = c.get("predicate", "")
-            if pred and pred not in KNOWN_PREDICATES:
+            if pred and pred not in known:
                 unknown.append({
                     "file": r["file"],
                     "predicate": pred,
@@ -331,18 +373,31 @@ def main():
         idx = sys.argv.index("--format")
         fmt = sys.argv[idx + 1] if idx + 1 < len(sys.argv) else "json"
 
+    # --gen-vocab: auto-generate project vocabulary from existing claims
+    if "--gen-vocab" in sys.argv:
+        idx = sys.argv.index("--gen-vocab")
+        out = sys.argv[idx + 1] if idx + 1 < len(sys.argv) else "wiki/_compiled/vocab.txt"
+        result = generate_vocab(target, out)
+        print(f"生成词汇表: {result['predicates']} 个谓词 → {result['output']}")
+        return
+
     # --vocab: check predicate vocabulary consistency
     if "--vocab" in sys.argv:
-        unknown = check_vocabulary(target)
-        if unknown:
-            print(f"未注册谓词: {len(unknown)} 处")
-            by_pred = defaultdict(list)
-            for u in unknown:
-                by_pred[u["predicate"]].append(u["file"])
-            for pred, files in sorted(by_pred.items()):
-                print(f"  {pred} @ {', '.join(files[:3])}")
-        else:
+        idx = sys.argv.index("--vocab")
+        vocab_file = sys.argv[idx + 1] if idx + 1 < len(sys.argv) else "wiki/_compiled/vocab.txt"
+        unknown = check_vocabulary(target, vocab_file)
+        if not unknown:
             print("所有谓词均在词汇表中。")
+        else:
+            if unknown == [] and not os.path.exists(vocab_file):
+                print("词汇表尚未生成。运行 --gen-vocab 自动生成，或手动创建 wiki/_compiled/vocab.txt。")
+            else:
+                print(f"未注册谓词: {len(unknown)} 处")
+                by_pred = defaultdict(list)
+                for u in unknown:
+                    by_pred[u["predicate"]].append(u["file"])
+                for pred, files in sorted(by_pred.items()):
+                    print(f"  {pred} @ {', '.join(files[:3])}")
         return
 
     # --source: find pages affected by a source change
