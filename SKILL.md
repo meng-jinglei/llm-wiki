@@ -585,8 +585,30 @@ raw/.tmp/llm_wiki_index_code.py  ← 临时脚本（会话内，方案 B）
 | 套路指纹 | `dimensions/trope-fingerprint.md` | 爽点模式、金手指类型、冲突升级结构 |
 | 对话纹理 | `dimensions/dialogue-texture.md` | 对话比例、功能、角色话术辨识度 |
 | AI 负空间 | `dimensions/ai-negative-space.md` | AI 难以模仿的人类特征、反 AI 检测信号 |
+| **世界观设计** | `dimensions/world-building.md` | **novelist 扩展**：规则体系完备性、创新评定、逻辑自洽 |
+| **世界观测评** | `dimensions/world-consistency.md` | **novelist 扩展**：世界观矛盾检测、设定遵守度 |
 
 每个维度页包含：维度定义、识别方法、变化光谱、代表作品链接、AI 常见模式。
+
+### 世界观分析（novelist 扩展）
+
+世界观是网文的核心竞争力之一。例如《神秘复苏》被认为"世界观超一流，人物塑造不入流"——《诡秘之主》的序列体系是其最大卖点。
+
+世界观 wiki 化结构：
+```
+wiki/novels/<slug>/world-building/
+├── _index.md              ← 世界观总览
+├── power-system.md        ← 力量体系（序列/斗气/鬼的规则）
+├── geography.md           ← 地理/势力分布
+├── history.md             ← 世界历史/背景纪元
+├── organizations.md       ← 组织/势力/教会
+├── magic-rules.md         ← 魔法/超自然规则
+└── consistency-check.md   ← 逻辑自洽验证结果
+```
+
+**世界观专用工作流**：
+- `world-analyze`：分析小说世界观——提取规则体系、检测逻辑自洽性
+- `world-consistency`：写作前检查——新章节是否违反已建立的世界规则
 
 ## 网文下载：经过实战验证的完整管线
 
