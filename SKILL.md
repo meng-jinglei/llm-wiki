@@ -691,23 +691,40 @@ curl -L -o "raw/assets/<slug>.txt" "<直链URL>"
 以下工作流是 novelist 在 llm-wiki 基础上新增的，基础工作流继承自 llm-wiki。
 
 ### style-analyze（文风分析）
-当用户提供一部网文并希望分析其文风时使用。从全文 TXT 按八个维度逐一分析，写入 `wiki/novels/<slug>/`。
+当用户提供一部网文并希望分析其文风时使用。
+
+**分析方法**：双层混合分析 —— 计算指标层（全量定量扫描）+ Wiki 编译层（llm-wiki ingest 管线）。
+详见 `.planning/novelist-analysis-methodology.md`。
 
 完整工作流见 `sub-skills/tasks/style-analyze.md`。
+
+**五阶段管线**：
+1. `style-metrics.py` 全量扫描 → 定量指纹 + 极端章定位 + 风格漂移检测
+2. Source Map 创建 → 基于指标+标题的章节优先级地图
+3. Wiki Ingest → 逐章编译角色/情节/场景 wiki（llm-wiki ingest 协议，可中断）
+4. 维度分析 → 定量数据 + wiki 知识融合撰写
+5. Compile → 叙事一致性验证 + 维度覆盖检查
 
 输出结构：
 ```
 wiki/novels/<slug>/
-├── overview.md        ← 文风总览
-├── syntax.md          ← 句法肌理分析
-├── vocab.md           ← 词汇光谱分析
-├── pacing.md          ← 叙事节奏分析
-├── atmosphere.md      ← 氛围质地分析
-├── scenes.md          ← 场景生态分析
-├── tropes.md          ← 套路指纹分析
-├── dialogue.md        ← 对话纹理分析
-├── ai-gaps.md         ← AI 负空间分析
-└── excerpts.md        ← 关键文本摘录
+├── overview.md              ← 文风总览
+├── source-map.md            ← 章节地图（优先级+状态追踪）
+├── characters/              ← 角色档案（含风格标注）
+├── plot-threads/            ← 情节线+伏笔
+├── timeline/                ← 时间线
+├── scenes/                  ← 场景分类目录
+├── style-dimensions/        ← 八个维度分析（定量+定性融合）
+│   ├── syntax.md
+│   ├── vocab.md
+│   ├── pacing.md
+│   ├── atmosphere.md
+│   ├── tropes.md
+│   ├── dialogue.md
+│   ├── scenes-analysis.md
+│   └── ai-gaps.md
+├── style-drift.md           ← 风格漂移分析
+└── excerpts.md              ← 关键摘录（含章号锚点）
 ```
 
 ### style-profile（文风文件生成）
