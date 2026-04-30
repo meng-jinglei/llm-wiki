@@ -180,6 +180,80 @@ clock_domain(periph:X, domain:Y) :-
 ```
 ```
 
+## llm-wiki-novelist 扩展架构
+
+以下内容仅适用于 `llm-wiki-novelist` 分支。
+
+### 文风维度体系
+
+novelist 将"文风"拆解为八个可交叉引用的 wiki 维度页。每个维度页包含维度定义、识别方法、变化光谱、代表作品链接。
+
+维度之间通过 `[[wiki链接]]` 形成知识网络：
+```
+[[句法肌理]] ←→ [[叙事节奏]]  ← 句子长度直接影响节奏感
+[[词汇光谱]] ←→ [[氛围质地]]  ← 用词选择决定氛围色调
+[[AI负空间]] ←→ 全部维度    ← AI 在每个维度上的特征
+```
+
+### 两大子系统
+
+```
+llm-wiki-novelist
+├── 文风研究 (style analysis)     ← 分析已有网文 → wiki/novels/
+└── 创作引擎 (writing engine)     ← wiki 记忆 → 写作 → 更新 wiki
+```
+
+交叉引用能力是 wik 优于 YAML 的关键：
+- 从维度出发：找所有短句主导型小说
+- 从小说出发：看所有维度的分析
+- 从对比出发：取两部小说的维度交集/差异
+- 未来 compile 可验证维度覆盖完整性
+
+### 工作流关系（扩展）
+
+```
+llm-wiki 基础工作流:
+  用户输入 → init → capture → ingest → query
+              ↑                   ↓
+             sync ← compile ← review/curate
+              │                   ↓
+              └──────── graph + Datalog
+
+novelist 扩展工作流:
+  用户输入 → style-analyze → style-profile (文风研究)
+  用户输入 → chapter-write → continuity-check (创作引擎)
+              ↓               ↓
+         plot-track    character-manage
+              ↓
+        timeline-sync
+```
+
+### profiles/ 是派生产物
+
+文风分析的主数据在 wiki/，profiles/ 是从 wiki 编译出的"使用文件"。wiki 更新后重新编译 profile。这保证了：
+- 主数据（wiki）可交叉引用、可被 compile 验证
+- 产物（profiles）可被写作 agent 直接使用
+- 两者保持同步（通过 style-profile 工作流）
+
+### 长篇创作的 wiki 记忆模型
+
+```
+每次写作 session:
+  写作前 → 读取 wiki 记忆
+    ├── 角色状态（位置/情绪/关系）
+    ├── 当前时间线位置
+    ├── 未回收伏笔
+    ├── 上一章摘要
+    └── 目标文风参考（profiles/*.yml）
+
+  写作后 → 更新 wiki
+    ├── 新章节摘要
+    ├── 角色状态变更
+    ├── 时间线新事件
+    └── 新伏笔/已回收伏笔
+```
+
 ## 未来方向
 
-见 [ROADMAP.md](ROADMAP.md)。当前阶段目标：v1.3 全链路闭环已实现，下一步聚焦关键声明采用率提升和大型 wiki 场景实战验证。
+见 [ROADMAP.md](ROADMAP.md)。llm-wiki main 分支当前阶段目标：v1.3 全链路闭环已实现。
+llm-wiki-novelist 分支当前阶段：Phase 0 → Phase 1，架构设计完成，文风维度定义完成。

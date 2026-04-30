@@ -1,6 +1,21 @@
 # Changelog
 
-## [Unreleased]
+## [2.0-novelist] — Unreleased (llm-wiki-novelist 分支)
+
+### Added
+- **novelist 分支创建** — 从 main 分出的网文写作特化分支
+- **SKILL.md novelist 版** — 基于 llm-wiki，扩展文风研究 + 长篇创作工作流
+- **八个文风维度定义** — 句法肌理、词汇光谱、叙事节奏、氛围质地、场景生态、套路指纹、对话纹理、AI 负空间
+- **候选网文矩阵** — 14 部候选作品（起点 + SF），含代表性评分和 Phase 1 推荐
+- **novelist 扩展工作流**：style-analyze、style-profile、chapter-write、continuity-check、plot-track、character-manage、timeline-sync
+- **开发规划文档** — 架构设计、路线图、研究笔记、候选矩阵
+- **writing-style wiki 工作空间** — 文风研究专用 llm-wiki vault
+
+### Changed
+- `.planning/` 从 .gitignore 移除（novelist 分支中追踪开发规划）
+- README 新增分支说明
+
+## [Unreleased] (main 分支)
 
 ## [1.3] — 2026-04-29
 

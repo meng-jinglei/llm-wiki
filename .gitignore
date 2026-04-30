@@ -3,4 +3,4 @@ node_modules/
 *.log
 .claude/
 CLAUDE.md
-.planning/
+# .planning/ — novelist 分支中追踪（开发规划是项目文档的一部分）

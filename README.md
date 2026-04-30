@@ -44,7 +44,15 @@ llm-wiki/
 └── examples/                 # 示例工作区
 ```
 
-## 安装
+## 分支
+
+| 分支 | 说明 |
+|------|------|
+| `main` | llm-wiki 通用版——文档建档、知识编译、代码绑定 |
+| `llm-wiki-novelist` | 网文写作特化版——文风研究 + 长篇创作引擎（基于 main） |
+
+`llm-wiki-novelist` 是 main 的扩展分支，继承全部基础工作流，增加文风分析和创作管理能力。
+详见该分支的 SKILL.md。
 
 ```bash
 mkdir -p ~/.claude/skills/llm-wiki

@@ -1,6 +1,6 @@
 ---
-name: llm-wiki
-description: 在本地 Markdown 工作空间中运行技能优先的知识工作流
+name: llm-wiki-novelist
+description: 网文写作特化版——基于 llm-wiki 知识编译管线，构建文风知识库与长篇创作引擎
 argument-hint: "<url, file, text, question, page, or action>"
 allowed-tools:
   - Read
@@ -16,17 +16,31 @@ allowed-tools:
 ---
 
 <objective>
-在本地 Markdown 工作空间中运行技能优先的知识工作流。
-工作空间跨会话、跨项目、跨来源积累知识——
-不是每次查询都从原始文档重新发现，而是编译和维护一个持续增长的持久化 wiki。
+**基于 [llm-wiki](https://github.com/meng-jinglei/llm-wiki) 技能**，在本地 Markdown 工作空间中运行网文写作知识工作流。
 
-wiki 中的每条声明都必须引用来源。每次查询都必须声明答案来源。
-每个大型源文档都必须能够分段处理，并支持可中断的进度。
+继承 llm-wiki 的全部能力（capture、ingest、query、research、compile 等），并扩展为网文写作专用工具链。
 
-适用场景：文档导入、项目驱动的知识积累、
-代码-文档绑定、大文件增量式 wiki 构建。
+两个核心目标：
+1. **文风研究**：分析已有网文，建立可交叉引用的文风维度 wiki，产出文风抽象化文件（profiles/）
+2. **长篇创作**：以 wiki 为持久记忆，支持 100 万+ 字连载写作——角色不漂移、情节不改设定、文风保持一致
+
+适用场景：网文文风分析、TXT 建档、角色/情节/时间线管理、连续性检查、长篇章节写作。
 Obsidian 是可选的界面，而非先决条件。
 </objective>
+
+## 免责声明
+
+本项目仅供个人学习与创作辅助使用。文风分析与小说下载应遵守相关版权法律。
+生成内容的知识产权归属由用户自行决定。
+
+<base_skill>
+**依赖声明：** 本技能是 llm-wiki 的特化扩展，必须与 llm-wiki 同时安装。
+所有 llm-wiki 的工作流（capture、ingest、query、research、review、compile、curate、sync、
+graph、project-init、code-anchor、map-document、index-codebase）在本技能中均完整可用。
+
+本文档仅记录 novelist 扩展内容。基础工作流的规则和用法继承自 llm-wiki，详见其 SKILL.md。
+如有冲突，novelist 扩展规则优先。
+</base_skill>
 
 <inputs>
 用户输入可以是以下之一：
@@ -39,6 +53,9 @@ Obsidian 是可选的界面，而非先决条件。
 - 为现有项目初始化 wiki 结构的请求
 - 在源代码和 wiki 页面之间建立双向链接的请求
 - 大型文档结构映射或代码库索引的请求
+- **网文专用**：要分析的网文名称或作者
+- **网文专用**：要下载的 TXT 来源 URL（需用户验证）
+- **网文专用**：章节写作、连续性检查、角色管理、情节追踪、时间线同步等创作操作
 </inputs>
 
 ## 使用方式
@@ -60,6 +77,13 @@ Obsidian 是可选的界面，而非先决条件。
 | "帮我绑定代码和手册" | `code-anchor` | 双向绑定：wiki知道代码，代码知道wiki |
 | "画出手册结构" / "PDF目录提取" | `map-document` | 提取 PDF/DOCX/PPTX 大纲 |
 | "索引这个代码目录" | `index-codebase` | 生成代码符号地图 |
+| **"分析斗破苍穹的文风"** | `style-analyze` | **novelist 扩展**：从 TXT 按维度分析文风 |
+| **"生成文风文件"** | `style-profile` | **novelist 扩展**：从 wiki 编译 profiles/*.yml |
+| **"写下一章" / "写第57章"** | `chapter-write` | **novelist 扩展**：读取wiki→写作→更新wiki |
+| **"检查连续性" / "有没有bug"** | `continuity-check` | **novelist 扩展**：扫描跨章节矛盾 |
+| **"还有哪些伏笔没回收"** | `plot-track` | **novelist 扩展**：伏笔与情节线管理 |
+| **"更新角色卡" / "林若现在什么状态"** | `character-manage` | **novelist 扩展**：角色状态追踪 |
+| **"更新时间线"** | `timeline-sync` | **novelist 扩展**：从新章提取时间事件 |
 
 歧义请求默认选择最窄的匹配工作流。
 
@@ -531,7 +555,7 @@ raw/.tmp/llm_wiki_index_code.py  ← 临时脚本（会话内，方案 B）
 </workflows>
 
 <process>
-1. 判断请求是 init、capture、ingest、query、research、review、compile、curate、sync、graph、project-init、code-anchor、map-document 还是 index-codebase。
+1. 判断请求是 init、capture、ingest、query、research、review、compile、curate、sync、graph、project-init、code-anchor、map-document、index-codebase 或 novelist 扩展工作流（style-analyze、style-profile、chapter-write、continuity-check、plot-track、character-manage、timeline-sync）。
 2. 在操作文件前确认工作空间根目录。
 3. 优先编辑现有页面而非创建重复页面。
 4. 捕获后保持原始来源不可变。
@@ -540,4 +564,128 @@ raw/.tmp/llm_wiki_index_code.py  ← 临时脚本（会话内，方案 B）
 7. 保存新的知识页面时，优先使用现有页面类型和路径，而非发明新结构。
 8. 当用户提问时，先从维护的 wiki 回答，仅在需要时扩大到原始来源。
 9. 当用户标记某个页面为错误或过时时，将其视为修正或整理工作流，而非重新导入。
+10. 文风分析时，先检查 wiki 是否已有该小说/维度的分析。
+11. 写作时，先读取 wiki 中的角色/时间线/情节状态再动笔；写完后更新 wiki。
+12. 下载网文 TXT 前，必须让用户验证 URL。
 </process>
+
+<novelist_extension>
+
+## 文风维度体系
+
+文风研究使用八个可交叉引用的维度页（详见 `wiki/dimensions/`）：
+
+| 维度 | wiki 页 | 研究内容 |
+|------|---------|---------|
+| 句法肌理 | `dimensions/syntax.md` | 句子长度、段落节奏、标点使用、断句习惯 |
+| 词汇光谱 | `dimensions/vocab.md` | 白话-古风位置、成语密度、标志性词汇 |
+| 叙事节奏 | `dimensions/pacing.md` | 高潮间距、过渡处理、章末钩子类型 |
+| 氛围质地 | `dimensions/atmosphere.md` | 情绪基调、感官侧重、场景的情绪功能 |
+| 场景生态 | `dimensions/scene-ecosystem.md` | 偏爱的场景类型、场景的叙事功能 |
+| 套路指纹 | `dimensions/trope-fingerprint.md` | 爽点模式、金手指类型、冲突升级结构 |
+| 对话纹理 | `dimensions/dialogue-texture.md` | 对话比例、功能、角色话术辨识度 |
+| AI 负空间 | `dimensions/ai-negative-space.md` | AI 难以模仿的人类特征、反 AI 检测信号 |
+
+每个维度页包含：维度定义、识别方法、变化光谱、代表作品链接、AI 常见模式。
+
+## novelist 扩展工作流
+
+以下工作流是 llm-wiki 的 novelist 扩展，基础工作流继承自 llm-wiki。
+
+### style-analyze（文风分析）
+当用户提供一部网文并希望分析其文风时使用。从全文 TXT 按八个维度逐一分析，写入 `wiki/novels/<slug>/`。
+
+完整工作流见 `sub-skills/tasks/style-analyze.md`。
+
+输出结构：
+```
+wiki/novels/<slug>/
+├── overview.md        ← 文风总览
+├── syntax.md          ← 句法肌理分析
+├── vocab.md           ← 词汇光谱分析
+├── pacing.md          ← 叙事节奏分析
+├── atmosphere.md      ← 氛围质地分析
+├── scenes.md          ← 场景生态分析
+├── tropes.md          ← 套路指纹分析
+├── dialogue.md        ← 对话纹理分析
+├── ai-gaps.md         ← AI 负空间分析
+└── excerpts.md        ← 关键文本摘录
+```
+
+### style-profile（文风文件生成）
+当用户希望从 wiki 分析编译出可使用的文风文件时使用。
+
+完整工作流见 `sub-skills/tasks/style-profile.md`。
+
+输出结构：
+```
+profiles/<style-name>.yml     ← 文风抽象化文件（给写作 agent 使用）
+profiles/使用说明.md           ← 使用指南
+```
+
+### chapter-write（章节写作）
+当用户希望基于 wiki 记忆写新章节时使用。
+
+流程：写作前 → 读取 wiki 记忆（角色状态/当前时间线/未回收伏笔/上一章摘要/目标文风）
+→ 写作 → 写作后更新 wiki（新章节摘要/角色状态变更/时间线新事件/伏笔更新）
+
+完整工作流见 `sub-skills/tasks/chapter-write.md`。
+
+### continuity-check（连续性检查）
+当用户希望检查跨章节一致性时使用。扫描角色信息、时间线、设定、情节线四个维度的矛盾。
+
+完整工作流见 `sub-skills/tasks/continuity-check.md`。
+
+### plot-track（情节追踪）
+当用户需要管理伏笔和情节线时使用。支持伏笔增删、回收标记、未回收伏笔列表。
+
+完整工作流见 `sub-skills/tasks/plot-track.md`。
+
+### character-manage（角色管理）
+当用户需要创建或更新角色卡时使用。支持角色状态快照、关系追踪、成长弧线记录。
+
+完整工作流见 `sub-skills/tasks/character-manage.md`。
+
+### timeline-sync（时间线同步）
+当写完新章节后需要更新时间线时使用。从新章提取时间事件，检测时间线冲突。
+
+完整工作流见 `sub-skills/tasks/timeline-sync.md`。
+
+## novelist 工作空间结构
+
+novelist 的工作空间在 llm-wiki 标准结构基础上增加了文风研究和创作记忆专用目录：
+
+```
+<工作空间>/
+├── CLAUDE.md                   ← 工作空间协议（llm-wiki 通用）
+├── raw/
+│   ├── sources/<slug>.md       ← 小说来源记录
+│   └── assets/<slug>.txt       ← 下载的全文 TXT（不可变）
+├── wiki/
+│   ├── dimensions/             ← 文风维度定义（可交叉引用）
+│   ├── novels/<slug>/          ← 已分析小说的完整文风档案
+│   ├── novels/<当前作品>/       ← 正在写的小说的"记忆"
+│   │   ├── characters/         ←   角色卡（状态/关系/成长）
+│   │   ├── timeline/           ←   时间线
+│   │   ├── plot-threads/       ←   伏笔与情节线
+│   │   └── chapters/           ←   每章摘要
+│   ├── authors/<author>/       ← 作者级文风指纹
+│   ├── comparisons/            ← 跨作品对比分析
+│   └── ai-traits/              ← AI 文风特征库
+├── profiles/                   ← 产出的文风抽象化文件（给 agent 使用）
+└── templates/                  ← 分析模板
+```
+
+## novelist 特有全局规则
+
+以下规则在 llm-wiki 全局规则基础上增加：
+
+- 写入 wiki 的每条文风声明必须包含文本摘录作为证据。
+  格式：`→ [摘录: 第X章, 第Y段]`。任何声明都不能没有可追溯的文本来源。
+- 文风维度页通过 `[[wiki链接]]` 与各小说分析页交叉引用——维度可以找到代表作品，作品可以找到维度表现。
+- 章节写作 session 开始前，必须先读取 wiki 中的角色/时间线/情节状态。
+- 章节写作 session 结束后，必须更新 wiki 中的章节摘要/角色状态/时间线/情节线。
+- 网文 TXT 下载前，由用户验证 URL。下载后保持 raw/ 不可变。
+- 如果文风在连载中有漂移，记录漂移轨迹而非强行统一——文风演变本身是有价值的信息。
+
+</novelist_extension>
