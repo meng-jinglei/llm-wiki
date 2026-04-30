@@ -10,10 +10,17 @@
 - **novelist 扩展工作流**：style-analyze、style-profile、chapter-write、continuity-check、plot-track、character-manage、timeline-sync
 - **开发规划文档** — 架构设计、路线图、研究笔记、候选矩阵
 - **writing-style wiki 工作空间** — 文风研究专用 llm-wiki vault
+- **实战验证的下载管线** — Anna's Archive 搜索 → opencli browser 提取直链 → curl 下载（已验证两部小说）
 
 ### Changed
 - `.planning/` 从 .gitignore 移除（novelist 分支中追踪开发规划）
 - README 新增分支说明
+- CLAUDE.md 新增临时文件管理规则、opencli 下载方案
+- SKILL.md 网文下载章节更新为实战验证的完整管线
+
+### Captured
+- `raw/assets/斗破苍穹.txt` (11MB, 532万字) — Anna's Archive / DuXiu
+- `raw/assets/诡秘之主.txt` (9MB, 446万字) — Anna's Archive / DuXiu
 
 ## [Unreleased] (main 分支)
 
