@@ -588,9 +588,62 @@ raw/.tmp/llm_wiki_index_code.py  ← 临时脚本（会话内，方案 B）
 
 每个维度页包含：维度定义、识别方法、变化光谱、代表作品链接、AI 常见模式。
 
+## 网文下载：基于 llm-wiki 的 research + capture
+
+novelist 不重新发明下载流程——下载网文 TXT 全文时，**严格遵循 llm-wiki 的 `research` 和 `capture` 工作流**。
+
+### 下载流程（继承 llm-wiki research 阶段二~四）
+
+**步骤 1：多渠道搜索**（→ llm-wiki `research` 阶段二）
+
+| 优先级 | 渠道 | 方法 |
+|--------|------|------|
+| 1 | **直接搜索 TXT** | WebSearch "`<小说名>` txt 下载" 或 "`<小说名>` 全文txt" |
+| 2 | **Anna's Archive** | 按 llm-wiki research 的流程：获取最新域名 → agent-browser 搜索 "`<书名>` `<作者>`" |
+| 3 | **备选渠道** | 知轩藏书、Z-Library 等，同样先搜索再验证 |
+
+**步骤 2：用户验证 URL**（novelist 特有安全规则）
+
+**任何下载前，必须向用户展示搜索结果 URL，等待确认。** 不自动下载。
+
+**步骤 3：捕获**（→ llm-wiki `capture` 工作流）
+
+用户确认后，下载 TXT 到 `raw/assets/<slug>.txt`，按 llm-wiki `capture` 工作流：
+1. 创建来源记录 `raw/sources/<slug>.md`（包含文件路径、元数据、获取状态）
+2. 对长篇（>100 万字）创建来源地图
+3. 追加 `log.md` 捕获记录
+4. 报告保存路径
+
+**Anna's Archive 约束**（继承 llm-wiki research）：
+- 域名频繁变动，绝不硬编码 URL
+- 每次使用前从 shadowlibraries.github.io 获取最新域名
+- 仅个人学习研究用途
+- 下载后 `raw/assets/` 内容不可变（llm-wiki 核心规则）
+
+## llm-wiki 工作流在 novelist 中的映射
+
+以下说明 llm-wiki 的每个基础工作流在 novelist 中如何使用：
+
+| llm-wiki 工作流 | novelist 中的用法 | 说明 |
+|----------------|-------------------|------|
+| `init` | 初始化文风研究 wiki | 创建 writing-style 工作空间结构 |
+| `project-init` | 为小说项目搭建创作 wiki | 创建角色/时间线/情节骨架 |
+| `capture` | **保存下载的 TXT + 创建来源记录** | 核心下载后处理 |
+| `ingest` | **文风分析——从 TXT 提取风格特征到 wiki** | 大文件增量导入协议 |
+| `research` | **多渠道搜索 + Anna's Archive 下载** | 核心下载流程 |
+| `query` | 查询文风问题 / 创作咨询 | 意图路由 + 渐进式加载 |
+| `sync` | 检测 TXT 是否有新章节 | 增量同步 |
+| `compile` | 文风维度覆盖检查 + 声明矛盾检测 | 三阶段编译验证 |
+| `review` | 9 项健康检查 | 适用于文风 wiki 和创作 wiki |
+| `curate` | 合并/重组分析页或创作页 | 人工主导 |
+| `graph` | 文风维度关系可视化 | Louvain 社区检测 |
+| `map-document` | TXT 结构提取（章节划分） | 大文件预处理 |
+| `code-anchor` | **不使用**（novelist 不涉及代码） | — |
+| `index-codebase` | **不使用**（novelist 不涉及代码） | — |
+
 ## novelist 扩展工作流
 
-以下工作流是 llm-wiki 的 novelist 扩展，基础工作流继承自 llm-wiki。
+以下工作流是 novelist 在 llm-wiki 基础上新增的，基础工作流继承自 llm-wiki。
 
 ### style-analyze（文风分析）
 当用户提供一部网文并希望分析其文风时使用。从全文 TXT 按八个维度逐一分析，写入 `wiki/novels/<slug>/`。
