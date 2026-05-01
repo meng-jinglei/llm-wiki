@@ -2,6 +2,16 @@
 
 ## [2.0-novelist] — Unreleased (llm-wiki-novelist 分支)
 
+### Changed (2026-05-01)
+- **项目结构重组（参照 AutoPku 三层分离式架构）**
+  - SKILL.md 精简：913 → 256 行，提取协议到 `sub-skills/protocols/`
+  - 新建 `sub-skills/protocols/large-file-protocol.md` — 大文件处理 + 来源地图 + 增量导入
+  - 新建 `sub-skills/protocols/download-pipeline.md` — 网文下载 9 步管线
+  - ROADMAP.md 更新为 novelist 版
+  - CLAUDE.md 新增会话恢复协议（结构化恢复流程）
+  - .gitignore 新增 `__pycache__/`、`raw/.tmp/`、`tmp/`
+  - 清理：5 个废弃 worktrees、`__pycache__/`、`--output` 文件、`tmp/` 目录统一到 `raw/.tmp/`
+
 ### Added
 - **novelist 分支创建** — 从 main 分出的网文写作特化分支
 - **SKILL.md novelist 版** — 基于 llm-wiki，扩展文风研究 + 长篇创作工作流
@@ -11,12 +21,17 @@
 - **开发规划文档** — 架构设计、路线图、研究笔记、候选矩阵
 - **writing-style wiki 工作空间** — 文风研究专用 llm-wiki vault
 - **实战验证的下载管线** — Anna's Archive 搜索 → opencli browser 提取直链 → curl 下载（已验证两部小说）
+- **style-analyze.md 工作流文件** — 五阶段文风分析管线，阶段间硬性门控，wiki ingest 不可跳过
+- **style-profile.md 工作流文件** — 文风文件编译工作流，硬前置条件检查（wiki 不完整则拒绝生成）
 
 ### Changed
 - `.planning/` 从 .gitignore 移除（novelist 分支中追踪开发规划）
 - README 新增分支说明
 - CLAUDE.md 新增临时文件管理规则、opencli 下载方案
 - SKILL.md 网文下载章节更新为实战验证的完整管线
+- **方法论强制化** — wiki 化改为 profile 生成硬前置条件。诡秘之主实战验证了"跳过 wiki = profile 无价值"
+- **ROADMAP 新增 Phase 1.5** — 网文作者基础能力研究（注水手法、章节经济学、微快感曲线）
+- **方法论文档新增"为什么 Wiki Ingest 不可跳过"** — 用诡秘之主作为反面案例
 
 ### Captured
 - `raw/assets/斗破苍穹.txt` (11MB, 532万字) — Anna's Archive / DuXiu

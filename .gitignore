@@ -3,4 +3,7 @@ node_modules/
 *.log
 .claude/
 CLAUDE.md
+__pycache__/
+raw/.tmp/
+tmp/
 # .planning/ — novelist 分支中追踪（开发规划是项目文档的一部分）
